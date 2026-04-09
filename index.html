@@ -127,13 +127,17 @@
                     </div>
                     
                     <div class="flex flex-col gap-2">
-                        <label class="text-xs font-bold text-slate-500 uppercase tracking-widest font-label ml-1">Malzeme Tipi</label>
-                        <select id="propMaterial" class="w-full bg-white/70 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-4 text-base font-medium font-body transition-all outline-none appearance-none">
-                            <option value="1.2">Karbon Fiber (Yüksek Dayanım)</option>
-                            <option value="1.0" selected>Cam Elyaf Naylon (Standart)</option>
-                            <option value="0.8">Enjeksiyon Plastik (Düşük Dayanım)</option>
-                        </select>
-                    </div>
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-widest font-label ml-1">Pervane Tipi</label>
+                        <select id="propType" class="w-full bg-white/70 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-4 text-base font-medium font-body transition-all outline-none appearance-none">
+                            <option value="glow">Glow Engine & Speed 400 Electric</option>
+                            <option value="thin_electric" selected>Thin Electric (E) & Polycarbonate FPV</option>
+                            <option value="folding">Folding Electric (F)</option>
+                            <option value="multirotor">Multi-Rotor (MR) & MR Folding</option>
+                            <option value="slow_flyer">Slow Flyer (SF)</option>
+                            <option value="racing_ic">Racing & Sport (içten yanmalı motorlar için)</option>
+                            <option value="racing_electric">Racing (Karbon) Elektrik Motorlu</option>
+                         </select>
+                     </div>
 
                     <button id="calculateBtn" class="w-full py-5 mt-4 bg-gradient-to-r from-teal-400 to-sky-400 hover:from-teal-500 hover:to-sky-500 text-white text-lg font-bold font-headline rounded-xl shadow-lg shadow-teal-200/50 active:scale-95 transition-all">
                         Sistem Analizini Çalıştır ve Dashboard'a Git
@@ -341,23 +345,36 @@
             }
         }
 
+        // Görseldeki sabit değerler (Sabit / Çap formülü için)
+        const rpmConstants = {
+            "glow": 190000,
+            "thin_electric": 150000,
+            "folding": 120000,
+            "multirotor": 105000,
+            "slow_flyer": 65000,
+            "racing_ic": 225000,
+            "racing_electric": 270000
+        };
+
         // Hesaplama ve Dashboard'a veri aktarma
         document.getElementById('calculateBtn').addEventListener('click', () => {
             const d = parseFloat(document.getElementById('propDiameter').value);
             const p = parseFloat(document.getElementById('propPitch').value);
-            const matSelect = document.getElementById('propMaterial');
-            const matName = matSelect.options[matSelect.selectedIndex].text.split(' ')[0]; // Sadece ilk kelimeyi al (Örn: Karbon)
-            const matFactor = parseFloat(matSelect.value);
+            const typeSelect = document.getElementById('propType');
+            const selectedType = typeSelect.value;
+            
+            // Seçilen tipin görünen adından sadece ilk kelimeyi al
+            const typeName = typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0]; 
 
             if (!d || !p || d <= 0) {
                 alert('Lütfen geçerli bir çap ve hatve değeri girin.');
                 return;
             }
 
-            // 1. Matematiksel Simülasyon (Gerçekçi görünmesi için formülize edilmiştir)
-            const baseConstant = 150000; 
-            const maxRpm = Math.floor((baseConstant / d) * matFactor);
-            
+            // 1. Yeni Formül ile Max RPM Hesaplaması
+            const baseConstant = rpmConstants[selectedType];
+            const maxRpm = Math.floor(baseConstant / d);
+
             // Thrust hesaplama (yaklaşık) T = (RPM^2 * D^4 * P) / Sabit
             const thrustKg = ((Math.pow(maxRpm, 2) * Math.pow(d, 4) * p) / 100000000000).toFixed(1); 
             
@@ -378,7 +395,7 @@
             }
 
             // 2. DOM Elemanlarını Güncelle
-            document.getElementById('dashTitle').innerText = `Analiz: ${matName} ${d}x${p}`;
+            document.getElementById('dashTitle').innerText = `Analiz: ${typeName} ${d}x${p}`;
             document.getElementById('dashRpm').innerText = new Intl.NumberFormat('tr-TR').format(maxRpm);
             document.getElementById('dashThrust').innerText = thrustKg;
             document.getElementById('dashPower').innerText = powerW;
@@ -390,6 +407,6 @@
             // 3. Ekranı Değiştir
             switchView('dashboard-view');
         });
-    </script>
+     </script>   
 </body>
 </html>
