@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>AeroPropel | Pervane & Motor Hesaplayıcı</title>
+    <title>AeroPropel | İtki Sistemi Analizi</title>
     
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
@@ -22,17 +22,20 @@
         
         /* Liquid Glass Effect */
         .liquid-glass {
-            background: rgba(255, 255, 255, 0.45);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid rgba(255, 255, 255, 0.6);
-            box-shadow: 0 8px 32px 0 rgba(45, 212, 191, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 8px 32px 0 rgba(45, 212, 191, 0.15);
         }
         
-        /* Custom scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #99f6e4; border-radius: 10px; }
+
+        /* Sayfa geçiş animasyonu */
+        .fade-enter { opacity: 0; transform: translateY(10px); }
+        .fade-enter-active { opacity: 1; transform: translateY(0); transition: opacity 400ms, transform 400ms; }
     </style>
 
     <script id="tailwind-config">
@@ -41,12 +44,8 @@
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#0ea5e9", /* Soft Blue */
-                        "primary-container": "#38bdf8",
-                        "secondary": "#14b8a6", /* Soft Teal/Green */
-                        "secondary-container": "#5eead4",
-                        "surface": "#f0fdfa",
-                        "surface-container": "#ffffff",
+                        "primary": "#0ea5e9", /* Sky Blue */
+                        "secondary": "#14b8a6", /* Teal */
                     },
                     fontFamily: {
                         "headline": ["Space Grotesk"],
@@ -60,27 +59,27 @@
 </head>
 <body class="text-slate-800">
 
-    <nav class="fixed top-0 w-full z-50 bg-white/60 backdrop-blur-xl flex justify-between items-center px-6 py-4 max-w-screen-2xl mx-auto border-b border-white/50 shadow-sm">
+    <nav class="fixed top-0 w-full z-50 bg-white/70 backdrop-blur-xl flex justify-between items-center px-6 py-4 max-w-screen-2xl mx-auto shadow-sm border-b border-teal-100/50">
         <div class="flex items-center gap-8">
             <span class="text-xl font-bold tracking-tighter text-teal-800 font-headline">AeroPropel</span>
-            <div class="hidden md:flex gap-6">
-                <a class="font-headline tracking-tight text-teal-600 border-b-2 border-teal-500 pb-1" href="#">Hesaplamalar</a>
+            <div class="hidden md:flex gap-6 items-center">
+                <a class="font-headline tracking-tight text-slate-500 hover:text-teal-500 transition-colors" href="#">Hesaplamalar</a>
                 <a class="font-headline tracking-tight text-slate-500 hover:text-teal-500 transition-colors" href="#">Pervaneler</a>
-                <a class="font-headline tracking-tight text-slate-500 hover:text-teal-500 transition-colors" href="#">Motorlar</a>
+                <a class="font-headline tracking-tight text-teal-600 border-b-2 border-teal-500 pb-1" href="#">Analiz</a>
             </div>
         </div>
         <div class="flex items-center gap-4">
-            <span class="material-symbols-outlined text-slate-500 cursor-pointer">settings</span>
-            <div class="w-8 h-8 rounded-full bg-teal-100 overflow-hidden flex items-center justify-center text-teal-600">
-                <span class="material-symbols-outlined text-sm">person</span>
-            </div>
+            <button class="material-symbols-outlined text-slate-500 hover:text-teal-500 transition-colors">settings</button>
+            <button class="bg-gradient-to-r from-teal-400 to-sky-400 text-white px-5 py-2 rounded-lg font-headline font-medium text-sm hover:opacity-90 active:scale-95 transition-all">
+                Konfigürasyonu Kaydet
+            </button>
         </div>
     </nav>
 
-    <aside class="h-screen w-64 fixed left-0 top-0 hidden lg:flex flex-col bg-white/50 backdrop-blur-md pt-20 border-r border-teal-100/50">
-        <div class="px-6 py-4">
-            <div class="flex items-center gap-3 mb-8 p-3 bg-white/80 rounded-xl shadow-sm border border-white">
-                <div class="w-10 h-10 bg-teal-50 rounded-lg flex items-center justify-center text-teal-500">
+    <aside class="h-screen w-64 fixed left-0 top-0 hidden lg:flex flex-col bg-white/50 backdrop-blur-md pt-20 border-r border-teal-100/50 z-40">
+        <div class="px-6 py-4 mt-4">
+            <div class="flex items-center gap-3 p-3 bg-white/80 rounded-xl shadow-sm border border-white">
+                <div class="w-10 h-10 bg-gradient-to-br from-teal-400 to-sky-400 rounded-lg flex items-center justify-center text-white">
                     <span class="material-symbols-outlined">architecture</span>
                 </div>
                 <div>
@@ -89,228 +88,307 @@
                 </div>
             </div>
         </div>
-        <nav class="flex flex-col gap-1 px-3">
-            <a class="flex items-center gap-3 px-4 py-3 text-teal-600 border-r-4 border-teal-500 bg-teal-50/50 font-headline text-sm font-medium rounded-l-lg" href="#">
-                <span class="material-symbols-outlined">architecture</span> Geometri
-            </a>
-            <a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/60 font-headline text-sm font-medium transition-all rounded-lg" href="#">
-                <span class="material-symbols-outlined">electric_bolt</span> Motor Eşleştirme
-            </a>
-            <a class="flex items-center gap-3 px-4 py-3 text-slate-500 hover:bg-white/60 font-headline text-sm font-medium transition-all rounded-lg" href="#">
-                <span class="material-symbols-outlined">insights</span> Sonuçlar
-            </a>
+        <nav class="flex flex-col gap-1 px-3 mt-4" id="sidebar-nav">
+            <button onclick="switchView('input-view')" id="nav-input" class="flex items-center w-full gap-3 px-4 py-3 text-teal-600 border-r-4 border-teal-500 bg-teal-50/80 font-headline text-sm font-medium rounded-l-lg transition-all">
+                <span class="material-symbols-outlined">architecture</span> Geometri Girdisi
+            </button>
+            <button onclick="switchView('dashboard-view')" id="nav-dashboard" class="flex items-center w-full gap-3 px-4 py-3 text-slate-500 hover:bg-white/60 font-headline text-sm font-medium rounded-lg transition-all">
+                <span class="material-symbols-outlined">insights</span> Sonuç Dashboard
+            </button>
         </nav>
     </aside>
 
-    <main class="lg:ml-64 pt-24 pb-24 px-4 md:px-6 min-h-screen">
-        <div class="max-w-6xl mx-auto space-y-8">
-            
-            <header class="flex flex-col md:flex-row md:items-end justify-between gap-4 pb-4">
+    <main class="lg:ml-64 pt-28 pb-24 px-4 md:px-8 max-w-7xl mx-auto">
+        
+        <div id="input-view" class="space-y-8 fade-enter-active">
+            <header class="pb-4">
+                <span class="text-xs font-bold text-teal-500 tracking-[0.2em] uppercase font-label">Sistem Girdileri</span>
+                <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tighter font-headline mt-1">Pervane Parametreleri</h1>
+            </header>
+
+            <div class="liquid-glass p-8 md:p-10 rounded-[2rem] max-w-2xl relative overflow-hidden">
+                <div class="absolute -top-20 -right-20 w-64 h-64 bg-teal-300/20 rounded-full blur-3xl"></div>
+                <div class="relative z-10 space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-widest font-label ml-1">Çap (Diameter)</label>
+                            <div class="relative">
+                                <input id="propDiameter" class="w-full bg-white/70 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-4 text-xl font-bold font-headline transition-all outline-none" type="number" step="0.1" value="15.0"/>
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">INÇ</span>
+                            </div>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-widest font-label ml-1">Hatve (Pitch)</label>
+                            <div class="relative">
+                                <input id="propPitch" class="w-full bg-white/70 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-4 text-xl font-bold font-headline transition-all outline-none" type="number" step="0.1" value="5.5"/>
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">INÇ</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-slate-500 uppercase tracking-widest font-label ml-1">Malzeme Tipi</label>
+                        <select id="propMaterial" class="w-full bg-white/70 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-4 text-base font-medium font-body transition-all outline-none appearance-none">
+                            <option value="1.2">Karbon Fiber (Yüksek Dayanım)</option>
+                            <option value="1.0" selected>Cam Elyaf Naylon (Standart)</option>
+                            <option value="0.8">Enjeksiyon Plastik (Düşük Dayanım)</option>
+                        </select>
+                    </div>
+
+                    <button id="calculateBtn" class="w-full py-5 mt-4 bg-gradient-to-r from-teal-400 to-sky-400 hover:from-teal-500 hover:to-sky-500 text-white text-lg font-bold font-headline rounded-xl shadow-lg shadow-teal-200/50 active:scale-95 transition-all">
+                        Sistem Analizini Çalıştır ve Dashboard'a Git
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="dashboard-view" class="hidden fade-enter-active">
+            <header class="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <span class="text-xs font-bold text-primary tracking-[0.2em] uppercase font-label">Mühendislik Çalışma Alanı</span>
-                    <h1 class="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tighter font-headline mt-1">Pervane Dayanımı <span class="text-slate-300">&</span> Eşleştirme</h1>
+                    <span class="uppercase tracking-[0.1em] text-teal-500 font-headline font-bold text-xs">Eşleştirme Sonuçları</span>
+                    <h1 id="dashTitle" class="text-3xl md:text-4xl font-headline font-bold text-slate-800 tracking-tighter mt-2">Analiz: Cam Elyaf 15x5.5</h1>
+                </div>
+                <div class="flex items-center gap-3">
+                    <button onclick="switchView('input-view')" class="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 font-headline text-sm font-medium hover:bg-slate-50 transition-colors">
+                        <span class="material-symbols-outlined text-sm">arrow_back</span> Geri Dön
+                    </button>
+                    <button class="flex items-center gap-2 px-4 py-2 bg-slate-800 text-white rounded-lg font-headline text-sm font-medium hover:opacity-90 transition-opacity">
+                        <span class="material-symbols-outlined text-sm">download</span> Dışa Aktar
+                    </button>
                 </div>
             </header>
 
             <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
-                
-                <section class="md:col-span-5 space-y-6">
-                    <div class="liquid-glass p-6 md:p-8 rounded-3xl relative overflow-hidden">
-                        <div class="absolute -top-24 -right-24 w-48 h-48 bg-teal-300/20 rounded-full blur-3xl"></div>
-                        <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-sky-300/20 rounded-full blur-2xl"></div>
-                        
-                        <div class="relative z-10 space-y-6">
-                            <h2 class="text-xl font-bold font-headline flex items-center gap-2 text-slate-800">
-                                <span class="material-symbols-outlined text-teal-500">architecture</span>
-                                Geometri Parametreleri
-                            </h2>
-                            
-                            <div class="space-y-4">
-                                <div class="grid grid-cols-2 gap-4">
-                                    <div class="flex flex-col gap-1.5">
-                                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-label ml-1">Çap (Diameter)</label>
-                                        <div class="relative">
-                                            <input id="propDiameter" class="w-full bg-white/50 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-3 text-lg font-bold font-headline transition-all outline-none" placeholder="5.0" type="number" step="0.1" value="5.0"/>
-                                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">INÇ</span>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-col gap-1.5">
-                                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-label ml-1">Hatve (Pitch)</label>
-                                        <div class="relative">
-                                            <input id="propPitch" class="w-full bg-white/50 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-3 text-lg font-bold font-headline transition-all outline-none" placeholder="4.5" type="number" step="0.1" value="4.5"/>
-                                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400">INÇ</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div class="flex flex-col gap-1.5">
-                                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest font-label ml-1">Malzeme</label>
-                                    <select id="propMaterial" class="w-full bg-white/50 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-3 text-sm font-medium font-body transition-all outline-none appearance-none">
-                                        <option value="1.2">Karbon Fiber (Yüksek Dayanım)</option>
-                                        <option value="1.0" selected>Cam Elyaf Naylon (Standart)</option>
-                                        <option value="0.8">Enjeksiyon Plastik (Düşük Dayanım)</option>
-                                    </select>
-                                </div>
+                <div class="md:col-span-8 lg:col-span-9 bg-white rounded-3xl p-8 border border-slate-100 shadow-sm relative overflow-hidden">
+                    <div class="relative z-10 flex flex-col h-full justify-between">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-headline text-2xl font-bold text-slate-800">Verimlilik Haritası</h3>
+                                <p class="text-slate-500 text-sm mt-1">RPM aralığındaki pervane performansı</p>
+                            </div>
+                        </div>
 
-                                <button id="calculateBtn" class="w-full py-4 mt-4 bg-gradient-to-r from-teal-400 to-sky-400 hover:from-teal-500 hover:to-sky-500 text-white font-bold font-headline rounded-xl shadow-lg shadow-teal-200/50 active:scale-95 transition-all">
-                                    Sistem Analizini Çalıştır
-                                </button>
+                        <div class="my-10 h-48 w-full bg-slate-50 border border-slate-100 flex items-end justify-between px-4 pb-0 gap-2 md:gap-4 rounded-2xl relative overflow-hidden">
+                            <div class="w-full h-[20%] bg-sky-200 rounded-t-lg"></div>
+                            <div class="w-full h-[40%] bg-sky-300 rounded-t-lg"></div>
+                            <div class="w-full h-[75%] bg-teal-400 rounded-t-lg relative">
+                                <div class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded font-bold">ZİRVE EFF</div>
+                            </div>
+                            <div class="w-full h-[100%] bg-teal-500 rounded-t-lg"></div>
+                            <div class="w-full h-[80%] bg-sky-400 rounded-t-lg"></div>
+                            <div class="w-full h-[50%] bg-sky-300 rounded-t-lg"></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <p class="text-[10px] font-headline font-bold uppercase tracking-widest text-slate-500 mb-1">Max RPM</p>
+                                <p id="dashRpm" class="text-2xl font-headline font-bold text-teal-600">8,450</p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <p class="text-[10px] font-headline font-bold uppercase tracking-widest text-slate-500 mb-1">Max İtki</p>
+                                <p class="text-2xl font-headline font-bold text-slate-800"><span id="dashThrust">4.2</span> <span class="text-sm font-normal text-slate-400">kgf</span></p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <p class="text-[10px] font-headline font-bold uppercase tracking-widest text-slate-500 mb-1">Güç İhtiyacı</p>
+                                <p class="text-2xl font-headline font-bold text-slate-800"><span id="dashPower">342</span> <span class="text-sm font-normal text-slate-400">W</span></p>
+                            </div>
+                            <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                <p class="text-[10px] font-headline font-bold uppercase tracking-widest text-slate-500 mb-1">Disk Yükü</p>
+                                <p class="text-2xl font-headline font-bold text-slate-800"><span id="dashDisc">12.5</span> <span class="text-sm font-normal text-slate-400">g/cm²</span></p>
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <div class="p-6 rounded-3xl bg-white border border-teal-100/50 shadow-sm flex flex-col items-center justify-center text-center space-y-2 relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-teal-400 to-sky-400"></div>
-                        <span class="text-[10px] font-bold text-teal-600 uppercase tracking-[0.2em]">Maksimum Güvenli Devir</span>
-                        <div class="text-4xl md:text-5xl font-extrabold font-headline tracking-tighter text-slate-800">
-                            <span id="resultRpm">--</span> <span class="text-xl text-slate-400 font-medium">RPM</span>
-                        </div>
-                        <div class="mt-2 px-3 py-1 bg-teal-50 text-teal-600 text-[10px] font-bold rounded-full uppercase" id="resultStatus">Bekleniyor...</div>
+                <div class="md:col-span-4 lg:col-span-3 bg-white rounded-3xl p-6 border border-slate-100 shadow-sm flex flex-col justify-between">
+                    <div>
+                        <h4 class="font-headline font-bold text-slate-800 text-lg">Sistem Sağlığı</h4>
+                        <p class="text-xs text-slate-500 mt-1">Hesaplanan termal yük</p>
                     </div>
-                </section>
-
-                <section class="md:col-span-7 space-y-6">
-                    <div class="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm relative group overflow-hidden h-full">
-                        <div class="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-                            <span class="material-symbols-outlined text-9xl text-teal-600">electric_bolt</span>
+                    <div class="py-8 space-y-8">
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-2">
+                                <span class="text-slate-600">Motor Sıc.</span>
+                                <span class="text-teal-600">45°C</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-teal-500" style="width: 45%;"></div>
+                            </div>
                         </div>
-                        
-                        <div class="relative z-10">
-                            <h2 class="text-2xl font-bold font-headline mb-6 text-slate-800">Önerilen Sistem Kombinasyonu</h2>
-                            
-                            <div class="space-y-8">
-                                <div class="space-y-3">
-                                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest font-label flex items-center gap-2">
-                                        <span class="material-symbols-outlined text-sm">earth_engine</span> Optimal Motor
-                                    </h3>
-                                    <div class="p-4 md:p-6 bg-slate-50 border border-slate-100 rounded-2xl flex items-center gap-4 transition-colors">
-                                        <div class="w-14 h-14 bg-white rounded-xl flex items-center justify-center shadow-sm text-sky-500">
-                                            <span class="material-symbols-outlined text-3xl">toys_fan</span>
-                                        </div>
-                                        <div>
-                                            <p id="resultMotorName" class="font-bold text-lg text-slate-800">Hesaplanıyor...</p>
-                                            <p id="resultMotorSpec" class="text-xs text-slate-500 uppercase font-label mt-1">Lütfen analiz yapın</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="space-y-3">
-                                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest font-label flex items-center gap-2">
-                                        <span class="material-symbols-outlined text-sm">battery_full</span> Enerji Konfigürasyonu
-                                    </h3>
-                                    <div class="flex flex-wrap gap-3">
-                                        <div class="flex-1 p-4 bg-teal-50/50 border border-teal-100 rounded-2xl text-center">
-                                            <p id="resultBatteryCells" class="text-2xl font-bold text-teal-600 font-headline">--</p>
-                                            <p id="resultBatteryVolt" class="text-[10px] font-bold text-teal-600/60 uppercase font-label">--</p>
-                                        </div>
-                                    </div>
-                                </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-2">
+                                <span class="text-slate-600">ESC Yükü</span>
+                                <span class="text-sky-500">62%</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-sky-400" style="width: 62%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-2">
+                                <span class="text-slate-600">Batarya Deşarj</span>
+                                <span class="text-amber-500">80%</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-amber-400" style="width: 80%;"></div>
                             </div>
                         </div>
                     </div>
-                </section>
+                    <button class="w-full py-3 bg-slate-50 rounded-xl text-slate-600 font-headline font-bold text-xs uppercase tracking-widest hover:bg-slate-100 transition-colors border border-slate-200">
+                        Detaylı Teşhis
+                    </button>
+                </div>
+
+                <div class="md:col-span-12 mt-8">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-2xl font-headline font-bold text-slate-800 tracking-tight">Optimize Edilmiş Kombinasyonlar</h2>
+                            <p class="text-sm text-slate-500">Seçilen pervane için motor ve batarya eşleşmeleri</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="liquid-glass rounded-[2rem] p-6 border border-teal-200 ring-4 ring-teal-50 flex flex-col gap-6 relative overflow-hidden">
+                            <div class="flex justify-between items-start relative z-10">
+                                <div class="bg-teal-100 text-teal-700 px-3 py-1 rounded-full text-[10px] font-headline font-bold uppercase tracking-wider">En Yüksek Verim</div>
+                                <span class="material-symbols-outlined text-teal-500" style="font-variation-settings: 'FILL' 1;">star</span>
+                            </div>
+                            <div>
+                                <h5 id="dashMotor1" class="text-xl font-headline font-bold text-slate-800">T-Motor U8 II</h5>
+                                <p id="dashBat1" class="text-sm text-slate-500 font-medium">Tattu Plus 12S 22Ah ile</p>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="flex-1 bg-white/60 rounded-2xl p-4 border border-white">
+                                    <p class="text-[10px] font-bold uppercase text-slate-500 mb-1">Uçuş Süresi</p>
+                                    <p class="text-2xl font-headline font-bold text-slate-800">32 <span class="text-xs font-normal">dk</span></p>
+                                </div>
+                            </div>
+                            <button class="w-full bg-gradient-to-r from-teal-400 to-sky-400 text-white py-3 rounded-xl font-headline font-bold text-sm shadow-md">Kombinasyonu Seç</button>
+                        </div>
+
+                        <div class="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm flex flex-col gap-6">
+                            <div class="flex justify-between items-start">
+                                <div class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[10px] font-headline font-bold uppercase tracking-wider">Ağır Yük (Heavy Lift)</div>
+                            </div>
+                            <div>
+                                <h5 class="text-xl font-headline font-bold text-slate-800">KDE Direct 7215</h5>
+                                <p class="text-sm text-slate-500 font-medium">MaxAmps 14S 16Ah ile</p>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="flex-1 bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                                    <p class="text-[10px] font-bold uppercase text-slate-500 mb-1">Uçuş Süresi</p>
+                                    <p class="text-2xl font-headline font-bold text-slate-800">24 <span class="text-xs font-normal">dk</span></p>
+                                </div>
+                            </div>
+                            <button class="w-full bg-slate-50 text-slate-600 py-3 rounded-xl font-headline font-bold text-sm hover:bg-slate-100 border border-slate-200 transition-colors">İstatistikleri Kıyasla</button>
+                        </div>
+                        
+                        <div class="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm flex flex-col gap-6">
+                            <div class="flex justify-between items-start">
+                                <div class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[10px] font-headline font-bold uppercase tracking-wider">Dengeli</div>
+                            </div>
+                            <div>
+                                <h5 class="text-xl font-headline font-bold text-slate-800">MAD M10 100KV</h5>
+                                <p class="text-sm text-slate-500 font-medium">GensAce 12S 10Ah ile</p>
+                            </div>
+                            <div class="flex gap-4">
+                                <div class="flex-1 bg-slate-50 rounded-2xl p-4 border border-slate-100">
+                                    <p class="text-[10px] font-bold uppercase text-slate-500 mb-1">Uçuş Süresi</p>
+                                    <p class="text-2xl font-headline font-bold text-slate-800">18 <span class="text-xs font-normal">dk</span></p>
+                                </div>
+                            </div>
+                            <button class="w-full bg-slate-50 text-slate-600 py-3 rounded-xl font-headline font-bold text-sm hover:bg-slate-100 border border-slate-200 transition-colors">İstatistikleri Kıyasla</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     </main>
 
     <nav class="fixed bottom-0 left-0 w-full flex justify-around items-center px-4 py-3 pb-safe bg-white/90 backdrop-blur-md z-50 lg:hidden shadow-[0_-4px_20px_0_rgba(0,0,0,0.05)] border-t border-slate-100">
-        <div class="flex flex-col items-center justify-center bg-teal-50 text-teal-600 rounded-xl px-4 py-1">
+        <button onclick="switchView('input-view')" class="flex flex-col items-center justify-center text-teal-600 rounded-xl px-4 py-1">
             <span class="material-symbols-outlined text-lg">edit_note</span>
             <span class="text-[10px] font-bold uppercase tracking-wider font-body">Girdi</span>
-        </div>
-        <div class="flex flex-col items-center justify-center text-slate-400">
-            <span class="material-symbols-outlined text-lg">earth_engine</span>
-            <span class="text-[10px] font-bold uppercase tracking-wider font-body">Motor</span>
-        </div>
-        <div class="flex flex-col items-center justify-center text-slate-400">
+        </button>
+        <button onclick="switchView('dashboard-view')" class="flex flex-col items-center justify-center text-slate-400 hover:text-teal-500">
             <span class="material-symbols-outlined text-lg">bar_chart</span>
             <span class="text-[10px] font-bold uppercase tracking-wider font-body">Sonuç</span>
-        </div>
+        </button>
     </nav>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const calculateBtn = document.getElementById('calculateBtn');
+        // Görünüm Değiştirme Fonksiyonu
+        function switchView(viewId) {
+            document.getElementById('input-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.add('hidden');
             
-            // DOM Elements
-            const propDiameter = document.getElementById('propDiameter');
-            const propPitch = document.getElementById('propPitch');
-            const propMaterial = document.getElementById('propMaterial');
-            
-            const resultRpm = document.getElementById('resultRpm');
-            const resultStatus = document.getElementById('resultStatus');
-            const resultMotorName = document.getElementById('resultMotorName');
-            const resultMotorSpec = document.getElementById('resultMotorSpec');
-            const resultBatteryCells = document.getElementById('resultBatteryCells');
-            const resultBatteryVolt = document.getElementById('resultBatteryVolt');
+            document.getElementById(viewId).classList.remove('hidden');
 
-            // Formatter for numbers
-            const formatter = new Intl.NumberFormat('tr-TR');
-
-            calculateBtn.addEventListener('click', () => {
-                // Değerleri al
-                const d = parseFloat(propDiameter.value);
-                const p = parseFloat(propPitch.value);
-                const matFactor = parseFloat(propMaterial.value);
-
-                if (!d || !p || d <= 0) {
-                    alert('Lütfen geçerli bir çap ve hatve değeri girin.');
-                    return;
-                }
-
-                // 1. RPM Dayanım Hesabı (Örnek Basit Formülleştirme)
-                // Daha büyük pervane = daha düşük maks RPM. Malzeme çarpanı ile desteklenir.
-                const baseConstant = 150000; 
-                let maxSafeRpm = Math.floor((baseConstant / d) * matFactor);
+            // Sidebar Aktif Sekme Görünümü
+            if(window.innerWidth >= 1024) { // LG screens
+                const navInput = document.getElementById('nav-input');
+                const navDashboard = document.getElementById('nav-dashboard');
                 
-                // Animasyonlu gösterim
-                resultRpm.innerText = formatter.format(maxSafeRpm);
-                resultStatus.innerText = "Hesaplandı - " + propMaterial.options[propMaterial.selectedIndex].text;
+                navInput.className = "flex items-center w-full gap-3 px-4 py-3 text-slate-500 hover:bg-white/60 font-headline text-sm font-medium rounded-lg transition-all";
+                navDashboard.className = "flex items-center w-full gap-3 px-4 py-3 text-slate-500 hover:bg-white/60 font-headline text-sm font-medium rounded-lg transition-all";
 
-                // 2. Motor ve Batarya Seçimi Mantığı
-                let motorName = "";
-                let motorKV = "";
-                let batteryS = "";
-                let batteryV = "";
-
-                // Boyuta göre gruplama (Mini drone vs Büyük FPV/Cinelifter)
-                if (d <= 3.5) {
-                    motorName = "AeroMicro 1404";
-                    motorKV = "4500 KV • 15A Peak";
-                    batteryS = "3S / 4S";
-                    batteryV = "11.1V - 14.8V LiPo";
-                } else if (d > 3.5 && d <= 5.5) {
-                    motorName = "Titan V2 Pro 2207";
-                    motorKV = "1750 KV - 1950 KV • 45A Peak";
-                    batteryS = "6S";
-                    batteryV = "22.2V LiPo";
-                } else if (d > 5.5 && d <= 8.0) {
-                    motorName = "EcoCinematic 2806.5";
-                    motorKV = "1300 KV • 50A Peak";
-                    batteryS = "6S";
-                    batteryV = "22.2V Li-Ion / LiPo";
+                if(viewId === 'input-view') {
+                    navInput.className = "flex items-center w-full gap-3 px-4 py-3 text-teal-600 border-r-4 border-teal-500 bg-teal-50/80 font-headline text-sm font-medium rounded-l-lg transition-all";
                 } else {
-                    motorName = "HeavyLift XING 3110";
-                    motorKV = "900 KV • 65A Peak";
-                    batteryS = "8S";
-                    batteryV = "29.6V Yüksek Kapasite";
+                    navDashboard.className = "flex items-center w-full gap-3 px-4 py-3 text-teal-600 border-r-4 border-teal-500 bg-teal-50/80 font-headline text-sm font-medium rounded-l-lg transition-all";
                 }
+            }
+        }
 
-                // UI Güncelleme
-                resultMotorName.innerText = motorName;
-                resultMotorSpec.innerText = motorKV;
-                resultBatteryCells.innerText = batteryS;
-                resultBatteryVolt.innerText = batteryV;
+        // Hesaplama ve Dashboard'a veri aktarma
+        document.getElementById('calculateBtn').addEventListener('click', () => {
+            const d = parseFloat(document.getElementById('propDiameter').value);
+            const p = parseFloat(document.getElementById('propPitch').value);
+            const matSelect = document.getElementById('propMaterial');
+            const matName = matSelect.options[matSelect.selectedIndex].text.split(' ')[0]; // Sadece ilk kelimeyi al (Örn: Karbon)
+            const matFactor = parseFloat(matSelect.value);
 
-                // Button efekti
-                calculateBtn.innerText = "Güncellendi ✓";
-                setTimeout(() => {
-                    calculateBtn.innerText = "Sistem Analizini Çalıştır";
-                }, 2000);
-            });
+            if (!d || !p || d <= 0) {
+                alert('Lütfen geçerli bir çap ve hatve değeri girin.');
+                return;
+            }
+
+            // 1. Matematiksel Simülasyon (Gerçekçi görünmesi için formülize edilmiştir)
+            const baseConstant = 150000; 
+            const maxRpm = Math.floor((baseConstant / d) * matFactor);
             
-            // Sayfa yüklendiğinde varsayılan değerlerle bir kez çalıştır
-            calculateBtn.click();
+            // Thrust hesaplama (yaklaşık) T = (RPM^2 * D^4 * P) / Sabit
+            const thrustKg = ((Math.pow(maxRpm, 2) * Math.pow(d, 4) * p) / 100000000000).toFixed(1); 
+            
+            // Güç hesaplama P = (RPM^3 * D^5 * P) / Sabit
+            const powerW = Math.floor((Math.pow(maxRpm, 3) * Math.pow(d, 5) * p) / 1000000000000000);
+            
+            // Disk Loading
+            const areaCm = Math.PI * Math.pow((d * 2.54) / 2, 2);
+            const discLoading = ((thrustKg * 1000) / areaCm).toFixed(1);
+
+            // Motor Önerisi (Çap'a göre değişen dinamik isimler)
+            let recMotor = "T-Motor U8 II";
+            let recBat = "Tattu Plus 12S 22Ah";
+            if(d <= 5) {
+                recMotor = "AeroMicro 1404"; recBat = "GensAce 4S 850mAh";
+            } else if (d > 5 && d <= 10) {
+                recMotor = "Titan V2 2207"; recBat = "Tattu 6S 1300mAh";
+            }
+
+            // 2. DOM Elemanlarını Güncelle
+            document.getElementById('dashTitle').innerText = `Analiz: ${matName} ${d}x${p}`;
+            document.getElementById('dashRpm').innerText = new Intl.NumberFormat('tr-TR').format(maxRpm);
+            document.getElementById('dashThrust').innerText = thrustKg;
+            document.getElementById('dashPower').innerText = powerW;
+            document.getElementById('dashDisc').innerText = discLoading;
+            
+            document.getElementById('dashMotor1').innerText = recMotor;
+            document.getElementById('dashBat1').innerText = `${recBat} ile`;
+
+            // 3. Ekranı Değiştir
+            switchView('dashboard-view');
         });
     </script>
 </body>
