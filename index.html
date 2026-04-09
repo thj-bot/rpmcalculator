@@ -212,29 +212,20 @@
                     <div class="py-8 space-y-8">
                         <div>
                             <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-2">
-                                <span class="text-slate-600">Motor Sıc.</span>
-                                <span class="text-teal-600">45°C</span>
+                                <span class="text-slate-600">ESC Yükü (60A)</span>
+                                <span id="escLoadVal" class="text-sky-500">0%</span>
                             </div>
                             <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-teal-500" style="width: 45%;"></div>
+                                <div id="escLoadBar" class="h-full bg-sky-400 transition-all duration-700" style="width: 0%;"></div>
                             </div>
                         </div>
                         <div>
                             <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-2">
-                                <span class="text-slate-600">ESC Yükü</span>
-                                <span class="text-sky-500">62%</span>
+                                <span class="text-slate-600">Batarya Deşarj (C)</span>
+                                <span id="batDischargeVal" class="text-amber-500">0%</span>
                             </div>
                             <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-sky-400" style="width: 62%;"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-[10px] font-bold uppercase tracking-widest mb-2">
-                                <span class="text-slate-600">Batarya Deşarj</span>
-                                <span class="text-amber-500">80%</span>
-                            </div>
-                            <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                <div class="h-full bg-amber-400" style="width: 80%;"></div>
+                                <div id="batDischargeBar" class="h-full bg-amber-400 transition-all duration-700" style="width: 0%;"></div>
                             </div>
                         </div>
                     </div>
@@ -356,46 +347,133 @@
             "racing_electric": 270000
         };
 
+        // Aerodinamik Katsayılar Sözlüğü (Ortalama Statik Ct ve Cp değerleri)
+        const aeroCoefficients = {
+            "glow": { ct: 0.13, cp: 0.06 },
+            "thin_electric": { ct: 0.11, cp: 0.04 },
+            "folding": { ct: 0.09, cp: 0.035 },
+            "multirotor": { ct: 0.10, cp: 0.045 },
+            "slow_flyer": { ct: 0.12, cp: 0.05 },
+            "racing_ic": { ct: 0.14, cp: 0.07 },
+            "racing_electric": { ct: 0.14, cp: 0.07 }
+        };
+
         // Hesaplama ve Dashboard'a veri aktarma
         document.getElementById('calculateBtn').addEventListener('click', () => {
-            const d = parseFloat(document.getElementById('propDiameter').value);
-            const p = parseFloat(document.getElementById('propPitch').value);
+            const d_inch = parseFloat(document.getElementById('propDiameter').value);
+            const p_inch = parseFloat(document.getElementById('propPitch').value);
             const typeSelect = document.getElementById('propType');
             const selectedType = typeSelect.value;
             
-            // Seçilen tipin görünen adından sadece ilk kelimeyi al
             const typeName = typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0]; 
 
-            if (!d || !p || d <= 0) {
+            if (!d_inch || !p_inch || d_inch <= 0) {
                 alert('Lütfen geçerli bir çap ve hatve değeri girin.');
                 return;
             }
 
-            // 1. Yeni Formül ile Max RPM Hesaplaması
+            // 1. Max RPM Hesaplaması (Daha önce yaptığımız kısım)
             const baseConstant = rpmConstants[selectedType];
-            const maxRpm = Math.floor(baseConstant / d);
+            const maxRpm = Math.floor(baseConstant / d_inch);
 
-            // Thrust hesaplama (yaklaşık) T = (RPM^2 * D^4 * P) / Sabit
-            const thrustKg = ((Math.pow(maxRpm, 2) * Math.pow(d, 4) * p) / 100000000000).toFixed(1); 
+            // 2. Gerçekçi Aerodinamik Hesaplamalar (Aşama 1)
+            const rho = 1.225; // Deniz seviyesi standart hava yoğunluğu (kg/m^3)
+            const d_meter = d_inch * 0.0254; // İnç'ten Metreye çevrim
+            const n_rps = maxRpm / 60; // Dakikadaki devirden saniyedeki devire (RPS) çevrim
             
-            // Güç hesaplama P = (RPM^3 * D^5 * P) / Sabit
-            const powerW = Math.floor((Math.pow(maxRpm, 3) * Math.pow(d, 5) * p) / 1000000000000000);
+            // Seçilen pervane tipinin katsayılarını çek
+            const ct = aeroCoefficients[selectedType].ct;
+            const cp = aeroCoefficients[selectedType].cp;
+
+            // Statik İtki Hesaplaması (Newton) -> T = Ct * rho * n^2 * D^4
+            const thrustNewtons = ct * rho * Math.pow(n_rps, 2) * Math.pow(d_meter, 4);
+            const thrustKg = (thrustNewtons / 9.81).toFixed(2); // Newton'u kgf'ye çevir
             
-            // Disk Loading
-            const areaCm = Math.PI * Math.pow((d * 2.54) / 2, 2);
+            // Mekanik Güç Hesaplaması (Watt) -> P = Cp * rho * n^3 * D^5
+            const powerW = Math.floor(cp * rho * Math.pow(n_rps, 3) * Math.pow(d_meter, 5));
+            
+            // Disk Loading (Disk Yükü - g/cm^2)
+            const areaCm = Math.PI * Math.pow((d_inch * 2.54) / 2, 2);
             const discLoading = ((thrustKg * 1000) / areaCm).toFixed(1);
 
-            // Motor Önerisi (Çap'a göre değişen dinamik isimler)
-            let recMotor = "T-Motor U8 II";
-            let recBat = "Tattu Plus 12S 22Ah";
-            if(d <= 5) {
-                recMotor = "AeroMicro 1404"; recBat = "GensAce 4S 850mAh";
-            } else if (d > 5 && d <= 10) {
-                recMotor = "Titan V2 2207"; recBat = "Tattu 6S 1300mAh";
-            }
+           // ---------------------------------------------------------
+            // AŞAMA 2: DİNAMİK MOTOR KV VE BATARYA (S) HESAPLAMASI
+            // ---------------------------------------------------------
+            
+            const motorEfficiency = 0.85; // Fırçasız motor ortalama verimi (%85)
+            const loadFactor = 0.85; // Motorun yük altındayken boşta dönme devrine oranı
+            
+            // 1. Gerekli Elektriksel Güç (Watt)
+            const elecPowerW = powerW / motorEfficiency;
+            
+            // 2. Standart LiPo Batarya Konfigürasyonları (Nominal Voltaj)
+            const batteryTiers = [
+                { s: 3, v: 11.1 },
+                { s: 4, v: 14.8 },
+                { s: 6, v: 22.2 },
+                { s: 8, v: 29.6 },
+                { s: 10, v: 37.0 },
+                { s: 12, v: 44.4 },
+                { s: 14, v: 51.8 }
+            ];
 
-            // 2. DOM Elemanlarını Güncelle
-            document.getElementById('dashTitle').innerText = `Analiz: ${typeName} ${d}x${p}`;
+            let selectedBat = batteryTiers[batteryTiers.length - 1]; // Varsayılan olarak en büyüğünü al
+            let currentDraw = 0;
+
+            // Maksimum 40-45A akım çekecek en düşük voltajlı bataryayı bul (Isınmayı önlemek için)
+            for (let tier of batteryTiers) {
+                currentDraw = elecPowerW / tier.v;
+                if (currentDraw <= 45) { 
+                    selectedBat = tier;
+                    break;
+                }
+            }
+            
+            // Kesin akım değerini güncelle
+            currentDraw = (elecPowerW / selectedBat.v).toFixed(1);
+
+            // 3. İdeal Motor KV Değerinin Hesaplanması
+            // RPM = KV * V * LoadFactor => KV = RPM / (V * LoadFactor)
+            const idealKV = Math.round(maxRpm / (selectedBat.v * loadFactor));
+
+            // DOM Güncellemesi İçin Değişkenleri Ayarla
+            let recMotor = `~${idealKV} KV Motor`;
+            let recBat = `${selectedBat.s}S Lipo (${currentDraw}A Akım)`;
+// ---------------------------------------------------------
+            // AŞAMA 3 & 4: ÇİFT MOTOR VE BATARYA DEŞARJ (C-RATING) ANALİZİ
+            // ---------------------------------------------------------
+            const numMotors = 2; // Platformun çift motorlu olduğu varsayımı
+            const totalCurrentDraw = currentDraw * numMotors; // Tüm sistemin çekeceği anlık toplam amper
+
+            // Seçilen Batarya Hücre Sayısına (S) Göre Standart Kapasiteler (Ah)
+            const typicalCapacities = {
+                3: 2.2, 4: 4.0, 6: 8.0, 8: 12.0, 10: 16.0, 12: 22.0, 14: 28.0
+            };
+            const capacityAh = typicalCapacities[selectedBat.s] || 10.0;
+            const batteryMaxCRating = 25; // Standart bir SİHA LiPo'sunun güvenli sürekli deşarj değeri (25C)
+
+            // C-Rating Hesaplaması: Toplam Akım / Batarya Kapasitesi
+            const requiredCRating = totalCurrentDraw / capacityAh;
+            const dischargePercent = Math.min((requiredCRating / batteryMaxCRating) * 100, 100).toFixed(0);
+
+            // ESC Yükü Hesaplaması (Varsayılan 60A kapasiteli ESC kullanıldığı varsayımı ile)
+            const escLimitA = 60;
+            const escLoadPercent = Math.min((currentDraw / escLimitA) * 100, 100).toFixed(0);
+
+            // Dashboard'a basılacak batarya öneri metnini güncelle (Kapasiteyi ve Toplam Akımı ekle)
+            recBat = `${selectedBat.s}S ${capacityAh}Ah Lipo (Toplam ${totalCurrentDraw.toFixed(1)}A çekiş)`;
+
+            // Sağlık Barlarının DOM Güncellemesi
+            document.getElementById('escLoadVal').innerText = `${escLoadPercent}%`;
+            document.getElementById('escLoadBar').style.width = `${escLoadPercent}%`;
+            document.getElementById('batDischargeVal').innerText = `${dischargePercent}%`;
+            document.getElementById('batDischargeBar').style.width = `${dischargePercent}%`;
+
+            // Kritik Mühendislik Uyarıları (Renk Değişimleri)
+            document.getElementById('batDischargeBar').className = `h-full transition-all duration-700 ${dischargePercent > 85 ? 'bg-red-500' : 'bg-amber-400'}`;
+            document.getElementById('escLoadBar').className = `h-full transition-all duration-700 ${escLoadPercent > 85 ? 'bg-red-500' : 'bg-sky-400'}`;
+            // DOM Elemanlarını Güncelle
+            document.getElementById('dashTitle').innerText = `Analiz: ${typeName} ${d_inch}x${p_inch}`;
             document.getElementById('dashRpm').innerText = new Intl.NumberFormat('tr-TR').format(maxRpm);
             document.getElementById('dashThrust').innerText = thrustKg;
             document.getElementById('dashPower').innerText = powerW;
@@ -404,7 +482,7 @@
             document.getElementById('dashMotor1').innerText = recMotor;
             document.getElementById('dashBat1').innerText = `${recBat} ile`;
 
-            // 3. Ekranı Değiştir
+            // Ekranı Değiştir
             switchView('dashboard-view');
         });
      </script>   
