@@ -139,6 +139,27 @@
                          </select>
                      </div>
 
+                    <div class="pt-4 border-t border-teal-100/50 mt-4">
+                        <span class="text-xs font-bold text-teal-500 tracking-[0.2em] uppercase font-label block mb-4">Platform (Seyir) Girdileri</span>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="flex flex-col gap-2">
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest font-label ml-1">Kalkış Ağırlığı (MTOW)</label>
+                                <div class="relative">
+                                    <input id="mtowWeight" class="w-full bg-white/70 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-4 text-xl font-bold font-headline transition-all outline-none" type="number" step="0.1" value="5.0"/>
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">KG</span>
+                                </div>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest font-label ml-1">L/D Oranı (Süzülme)</label>
+                                <div class="relative">
+                                    <input id="ldRatio" class="w-full bg-white/70 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-4 text-xl font-bold font-headline transition-all outline-none" type="number" step="0.1" value="10.0"/>
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">ORAN</span>
+                                </div>
+                                <p class="text-[10px] text-slate-400 ml-1 mt-1 font-medium">Sabit kanatlı platformlar için genelde 8-12 arasıdır.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <button id="calculateBtn" class="w-full py-5 mt-4 bg-gradient-to-r from-teal-400 to-sky-400 hover:from-teal-500 hover:to-sky-500 text-white text-lg font-bold font-headline rounded-xl shadow-lg shadow-teal-200/50 active:scale-95 transition-all">
                         Sistem Analizini Çalıştır ve Dashboard'a Git
                     </button>
@@ -255,7 +276,7 @@
                             <div class="flex gap-4">
                                 <div class="flex-1 bg-white/60 rounded-2xl p-4 border border-white">
                                     <p class="text-[10px] font-bold uppercase text-slate-500 mb-1">Uçuş Süresi</p>
-                                    <p class="text-2xl font-headline font-bold text-slate-800">32 <span class="text-xs font-normal">dk</span></p>
+                                    <p class="text-2xl font-headline font-bold text-slate-800"><span id="flightTime1">0</span> <span class="text-xs font-normal">dk</span></p>
                                 </div>
                             </div>
                             <button class="w-full bg-gradient-to-r from-teal-400 to-sky-400 text-white py-3 rounded-xl font-headline font-bold text-sm shadow-md">Kombinasyonu Seç</button>
@@ -263,36 +284,36 @@
 
                         <div class="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm flex flex-col gap-6">
                             <div class="flex justify-between items-start">
-                                <div class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[10px] font-headline font-bold uppercase tracking-wider">Ağır Yük (Heavy Lift)</div>
+                                <div class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[10px] font-headline font-bold uppercase tracking-wider">Aðýr Yük (Kýsa Menzil)</div>
                             </div>
                             <div>
-                                <h5 class="text-xl font-headline font-bold text-slate-800">KDE Direct 7215</h5>
-                                <p class="text-sm text-slate-500 font-medium">MaxAmps 14S 16Ah ile</p>
+                                <h5 id="dashMotor2" class="text-xl font-headline font-bold text-slate-800">Seyir RPM: --</h5>
+                                <p id="dashBat2" class="text-sm text-slate-500 font-medium">Hesaplanýyor...</p>
                             </div>
                             <div class="flex gap-4">
                                 <div class="flex-1 bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                                    <p class="text-[10px] font-bold uppercase text-slate-500 mb-1">Uçuş Süresi</p>
-                                    <p class="text-2xl font-headline font-bold text-slate-800">24 <span class="text-xs font-normal">dk</span></p>
+                                    <p class="text-[10px] font-bold uppercase text-slate-500 mb-1">Uçuç Süresi</p>
+                                    <p class="text-2xl font-headline font-bold text-slate-800"><span id="flightTime2">0</span> <span class="text-xs font-normal">dk</span></p>
                                 </div>
                             </div>
-                            <button class="w-full bg-slate-50 text-slate-600 py-3 rounded-xl font-headline font-bold text-sm hover:bg-slate-100 border border-slate-200 transition-colors">İstatistikleri Kıyasla</button>
+                            <button class="w-full bg-slate-50 text-slate-600 py-3 rounded-xl font-headline font-bold text-sm hover:bg-slate-100 border border-slate-200 transition-colors">Bu Profili Seç</button>
                         </div>
                         
                         <div class="bg-white rounded-[2rem] p-6 border border-slate-100 shadow-sm flex flex-col gap-6">
                             <div class="flex justify-between items-start">
-                                <div class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[10px] font-headline font-bold uppercase tracking-wider">Dengeli</div>
+                                <div class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-[10px] font-headline font-bold uppercase tracking-wider">Dengeli (Görev Yükü)</div>
                             </div>
                             <div>
-                                <h5 class="text-xl font-headline font-bold text-slate-800">MAD M10 100KV</h5>
-                                <p class="text-sm text-slate-500 font-medium">GensAce 12S 10Ah ile</p>
+                                <h5 id="dashMotor3" class="text-xl font-headline font-bold text-slate-800">Seyir RPM: --</h5>
+                                <p id="dashBat3" class="text-sm text-slate-500 font-medium">Hesaplanýyor...</p>
                             </div>
                             <div class="flex gap-4">
                                 <div class="flex-1 bg-slate-50 rounded-2xl p-4 border border-slate-100">
-                                    <p class="text-[10px] font-bold uppercase text-slate-500 mb-1">Uçuş Süresi</p>
-                                    <p class="text-2xl font-headline font-bold text-slate-800">18 <span class="text-xs font-normal">dk</span></p>
+                                    <p class="text-[10px] font-bold uppercase text-slate-500 mb-1">Uçuç Süresi</p>
+                                    <p class="text-2xl font-headline font-bold text-slate-800"><span id="flightTime3">0</span> <span class="text-xs font-normal">dk</span></p>
                                 </div>
                             </div>
-                            <button class="w-full bg-slate-50 text-slate-600 py-3 rounded-xl font-headline font-bold text-sm hover:bg-slate-100 border border-slate-200 transition-colors">İstatistikleri Kıyasla</button>
+                            <button class="w-full bg-slate-50 text-slate-600 py-3 rounded-xl font-headline font-bold text-sm hover:bg-slate-100 border border-slate-200 transition-colors">Bu Profili Seç</button>
                         </div>
                     </div>
                 </div>
@@ -364,63 +385,49 @@
             const p_inch = parseFloat(document.getElementById('propPitch').value);
             const typeSelect = document.getElementById('propType');
             const selectedType = typeSelect.value;
-            
             const typeName = typeSelect.options[typeSelect.selectedIndex].text.split(' ')[0]; 
 
-            if (!d_inch || !p_inch || d_inch <= 0) {
-                alert('Lütfen geçerli bir çap ve hatve değeri girin.');
+            // 1. DINAMIK AÐIRLIK BÜTÇESI IÇIN GÝRDÝLERÝ ÇEK
+            const mtowKg = parseFloat(document.getElementById('mtowWeight').value);
+            const ldRatio = parseFloat(document.getElementById('ldRatio').value);
+
+            if (!d_inch || !p_inch || d_inch <= 0 || !mtowKg || !ldRatio) {
+                alert('Lütfen geçerli deðerler girin.');
                 return;
             }
 
-            // 1. Max RPM Hesaplaması (Daha önce yaptığımız kısım)
+            // 2. Aerodinamik Sýnýflar ve Statik Tam Gaz Hesaplamalarý
             const baseConstant = rpmConstants[selectedType];
             const maxRpm = Math.floor(baseConstant / d_inch);
 
-            // 2. Gerçekçi Aerodinamik Hesaplamalar (Aşama 1)
-            const rho = 1.225; // Deniz seviyesi standart hava yoğunluğu (kg/m^3)
-            const d_meter = d_inch * 0.0254; // İnç'ten Metreye çevrim
-            const n_rps = maxRpm / 60; // Dakikadaki devirden saniyedeki devire (RPS) çevrim
+            const rho = 1.225; // kg/m^3
+            const d_meter = d_inch * 0.0254; 
+            const n_rps = maxRpm / 60; 
             
-            // Seçilen pervane tipinin katsayılarını çek
             const ct = aeroCoefficients[selectedType].ct;
             const cp = aeroCoefficients[selectedType].cp;
 
-            // Statik İtki Hesaplaması (Newton) -> T = Ct * rho * n^2 * D^4
             const thrustNewtons = ct * rho * Math.pow(n_rps, 2) * Math.pow(d_meter, 4);
-            const thrustKg = (thrustNewtons / 9.81).toFixed(2); // Newton'u kgf'ye çevir
-            
-            // Mekanik Güç Hesaplaması (Watt) -> P = Cp * rho * n^3 * D^5
+            const thrustKg = (thrustNewtons / 9.81).toFixed(2); 
             const powerW = Math.floor(cp * rho * Math.pow(n_rps, 3) * Math.pow(d_meter, 5));
             
-            // Disk Loading (Disk Yükü - g/cm^2)
             const areaCm = Math.PI * Math.pow((d_inch * 2.54) / 2, 2);
             const discLoading = ((thrustKg * 1000) / areaCm).toFixed(1);
 
-           // ---------------------------------------------------------
-            // AŞAMA 2: DİNAMİK MOTOR KV VE BATARYA (S) HESAPLAMASI
-            // ---------------------------------------------------------
-            
-            const motorEfficiency = 0.85; // Fırçasız motor ortalama verimi (%85)
-            const loadFactor = 0.85; // Motorun yük altındayken boşta dönme devrine oranı
-            
-            // 1. Gerekli Elektriksel Güç (Watt)
+            // 3. Ýdeal Voltajý (S) Bulma (Kablolar erimesin diye 45A sýnýrýný hedefler)
+            const motorEfficiency = 0.85; 
+            const loadFactor = 0.85; 
             const elecPowerW = powerW / motorEfficiency;
             
-            // 2. Standart LiPo Batarya Konfigürasyonları (Nominal Voltaj)
+            // Gerçekçi Endüstri Standartlarý (10S ve 14S Çýkarýldý)
             const batteryTiers = [
-                { s: 3, v: 11.1 },
-                { s: 4, v: 14.8 },
-                { s: 6, v: 22.2 },
-                { s: 8, v: 29.6 },
-                { s: 10, v: 37.0 },
-                { s: 12, v: 44.4 },
-                { s: 14, v: 51.8 }
+                { s: 3, v: 11.1 }, { s: 4, v: 14.8 }, { s: 6, v: 22.2 },
+                { s: 8, v: 29.6 }, { s: 12, v: 44.4 }
             ];
 
-            let selectedBat = batteryTiers[batteryTiers.length - 1]; // Varsayılan olarak en büyüğünü al
+            let selectedBat = batteryTiers[batteryTiers.length - 1]; 
             let currentDraw = 0;
 
-            // Maksimum 40-45A akım çekecek en düşük voltajlı bataryayı bul (Isınmayı önlemek için)
             for (let tier of batteryTiers) {
                 currentDraw = elecPowerW / tier.v;
                 if (currentDraw <= 45) { 
@@ -428,61 +435,102 @@
                     break;
                 }
             }
-            
-            // Kesin akım değerini güncelle
             currentDraw = (elecPowerW / selectedBat.v).toFixed(1);
+            const numMotors = 2; // Çift Motor Mimarisi
+            const totalMaxCurrentDraw = currentDraw * numMotors;
 
-            // 3. İdeal Motor KV Değerinin Hesaplanması
-            // RPM = KV * V * LoadFactor => KV = RPM / (V * LoadFactor)
-            const idealKV = Math.round(maxRpm / (selectedBat.v * loadFactor));
+            // 4. AÐIRLIK BÜTÇESI (WEIGHT BUDGETING) ILE DÝNAMÝK KAPASÝTE (Ah)
+            // Uçaðýn toplam aðýrlýðýnýn maksimum %30'u batarya olabilir
+            const maxBatteryWeightKg = mtowKg * 0.30; 
+            const energyDensityWhPerKg = 150; // LiPo ortalama enerji yoðunluðu
+            const totalEnergyWh = maxBatteryWeightKg * energyDensityWhPerKg;
+            
+            // Ayrýlan enerji bütçesine göre voltaja uygun Ah kapasitesi
+            let capacityAh = totalEnergyWh / selectedBat.v;
+            capacityAh = Math.round(capacityAh * 10) / 10; // Küsüratý yuvarla (Örn: 10.1 Ah)
 
-            // DOM Güncellemesi İçin Değişkenleri Ayarla
-            let recMotor = `~${idealKV} KV Motor`;
-            let recBat = `${selectedBat.s}S Lipo (${currentDraw}A Akım)`;
-// ---------------------------------------------------------
-            // AŞAMA 3 & 4: ÇİFT MOTOR VE BATARYA DEŞARJ (C-RATING) ANALİZİ
-            // ---------------------------------------------------------
-            const numMotors = 2; // Platformun çift motorlu olduğu varsayımı
-            const totalCurrentDraw = currentDraw * numMotors; // Tüm sistemin çekeceği anlık toplam amper
-
-            // Seçilen Batarya Hücre Sayısına (S) Göre Standart Kapasiteler (Ah)
-            const typicalCapacities = {
-                3: 2.2, 4: 4.0, 6: 8.0, 8: 12.0, 10: 16.0, 12: 22.0, 14: 28.0
-            };
-            const capacityAh = typicalCapacities[selectedBat.s] || 10.0;
-            const batteryMaxCRating = 25; // Standart bir SİHA LiPo'sunun güvenli sürekli deşarj değeri (25C)
-
-            // C-Rating Hesaplaması: Toplam Akım / Batarya Kapasitesi
-            const requiredCRating = totalCurrentDraw / capacityAh;
+            // 5. C-Rating Sýnamasý (Pili Yakmiyor muyuz?)
+            const batteryMaxCRating = 25; 
+            const requiredCRating = totalMaxCurrentDraw / capacityAh;
             const dischargePercent = Math.min((requiredCRating / batteryMaxCRating) * 100, 100).toFixed(0);
 
-            // ESC Yükü Hesaplaması (Varsayılan 60A kapasiteli ESC kullanıldığı varsayımı ile)
             const escLimitA = 60;
             const escLoadPercent = Math.min((currentDraw / escLimitA) * 100, 100).toFixed(0);
 
-            // Dashboard'a basılacak batarya öneri metnini güncelle (Kapasiteyi ve Toplam Akımı ekle)
-            recBat = `${selectedBat.s}S ${capacityAh}Ah Lipo (Toplam ${totalCurrentDraw.toFixed(1)}A çekiş)`;
+            // 6. Seyir (Cruise) ve Gerçek Uçuç Süresi Analizi
+            const requiredCruiseThrustTotalN = (mtowKg * 9.81) / ldRatio;
+            const requiredCruiseThrustPerMotorN = requiredCruiseThrustTotalN / numMotors;
 
-            // Sağlık Barlarının DOM Güncellemesi
-            document.getElementById('escLoadVal').innerText = `${escLoadPercent}%`;
-            document.getElementById('escLoadBar').style.width = `${escLoadPercent}%`;
-            document.getElementById('batDischargeVal').innerText = `${dischargePercent}%`;
-            document.getElementById('batDischargeBar').style.width = `${dischargePercent}%`;
+            const cruise_n_rps = Math.sqrt(requiredCruiseThrustPerMotorN / (ct * rho * Math.pow(d_meter, 4)));
+            const cruiseRpm = cruise_n_rps * 60;
 
-            // Kritik Mühendislik Uyarıları (Renk Değişimleri)
-            document.getElementById('batDischargeBar').className = `h-full transition-all duration-700 ${dischargePercent > 85 ? 'bg-red-500' : 'bg-amber-400'}`;
-            document.getElementById('escLoadBar').className = `h-full transition-all duration-700 ${escLoadPercent > 85 ? 'bg-red-500' : 'bg-sky-400'}`;
-            // DOM Elemanlarını Güncelle
+            const cruisePowerW = cp * rho * Math.pow(cruise_n_rps, 3) * Math.pow(d_meter, 5);
+            const cruiseCurrentDrawA = (cruisePowerW / motorEfficiency) / selectedBat.v;
+            
+            const totalCruiseCurrentDraw = cruiseCurrentDrawA * numMotors;
+            const flightTimeMinutes = (capacityAh / totalCruiseCurrentDraw) * 60;
+
+            // 7. DOM (Ekran) Güncellemeleri
             document.getElementById('dashTitle').innerText = `Analiz: ${typeName} ${d_inch}x${p_inch}`;
             document.getElementById('dashRpm').innerText = new Intl.NumberFormat('tr-TR').format(maxRpm);
             document.getElementById('dashThrust').innerText = thrustKg;
             document.getElementById('dashPower').innerText = powerW;
             document.getElementById('dashDisc').innerText = discLoading;
             
-            document.getElementById('dashMotor1').innerText = recMotor;
-            document.getElementById('dashBat1').innerText = `${recBat} ile`;
+            // Saðlýk Barlarý
+            document.getElementById('escLoadVal').innerText = `${escLoadPercent}%`;
+            document.getElementById('escLoadBar').style.width = `${escLoadPercent}%`;
+            document.getElementById('batDischargeVal').innerText = `${dischargePercent}%`;
+            document.getElementById('batDischargeBar').style.width = `${dischargePercent}%`;
+            document.getElementById('batDischargeBar').className = `h-full transition-all duration-700 ${dischargePercent > 85 ? 'bg-red-500' : 'bg-amber-400'}`;
+            document.getElementById('escLoadBar').className = `h-full transition-all duration-700 ${escLoadPercent > 85 ? 'bg-red-500' : 'bg-sky-400'}`;
 
-            // Ekranı Değiştir
+            // Alt Kart (Optimum Seçim)
+            document.getElementById('dashMotor1').innerText = `Seyir RPM: ${Math.round(cruiseRpm)}`;
+            
+            // Eðer tam gazda deþarj limiti aþýlýrsa kýrmýzý ile uyar, yoksa sadece batarya bilgisini yaz
+            if (requiredCRating > batteryMaxCRating) {
+                document.getElementById('dashBat1').innerHTML = `${selectedBat.s}S ${capacityAh}Ah Lipo (Seyir: ${totalCruiseCurrentDraw.toFixed(1)}A)<br><span class="text-red-500 font-bold text-[10px] mt-1 block uppercase tracking-wider">UYARI: TAM GAZDA PIL DEARJ LIMITI (${requiredCRating.toFixed(1)}C) ASILDI! PIL YANABILIR.</span>`;
+            } else {
+                document.getElementById('dashBat1').innerHTML = `${selectedBat.s}S ${capacityAh}Ah Lipo (Seyir: ${totalCruiseCurrentDraw.toFixed(1)}A)<br><span class="text-teal-600 font-bold text-[10px] mt-1 block uppercase tracking-wider">BATARYA AGIRLIGI: ~${maxBatteryWeightKg.toFixed(1)} KG</span>`;
+            }
+            
+            let displayFlightTime = Math.round(flightTimeMinutes);
+            if(displayFlightTime > 999) displayFlightTime = ">999"; 
+            document.getElementById('flightTime1').innerText = displayFlightTime;
+
+            // ---------------------------------------------------------
+            // 8. ÇOKLU UÇUÇ PROFÝLLERÝ (AÐIR YÜK VE DENGELÝ)
+            // ---------------------------------------------------------
+
+            // Profil 2: Aðýr Yük (Maksimum Payload, Minimum Batarya - Uçaðýn sadece %15'i batarya)
+            const maxBatWeightKg2 = mtowKg * 0.15; 
+            let capacityAh2 = Math.round(((maxBatWeightKg2 * energyDensityWhPerKg) / selectedBat.v) * 10) / 10;
+            const flightTimeMinutes2 = (capacityAh2 / totalCruiseCurrentDraw) * 60;
+            const requiredCRating2 = totalMaxCurrentDraw / capacityAh2;
+
+            document.getElementById('dashMotor2').innerText = `Seyir RPM: ${Math.round(cruiseRpm)}`;
+            if (requiredCRating2 > batteryMaxCRating) {
+                document.getElementById('dashBat2').innerHTML = `${selectedBat.s}S ${capacityAh2}Ah Lipo<br><span class="text-red-500 font-bold text-[10px] mt-1 block uppercase tracking-wider">UYARI: DEARJ LÝMÝTÝ ASILDI!</span>`;
+            } else {
+                document.getElementById('dashBat2').innerHTML = `${selectedBat.s}S ${capacityAh2}Ah Lipo<br><span class="text-slate-400 font-medium text-[10px] mt-1 block uppercase tracking-wider">Batarya: ~${maxBatWeightKg2.toFixed(1)} KG</span>`;
+            }
+            document.getElementById('flightTime2').innerText = flightTimeMinutes2 > 999 ? ">999" : Math.round(flightTimeMinutes2);
+
+            // Profil 3: Dengeli (Standart Uçuç - Uçaðýn %22'si batarya)
+            const maxBatWeightKg3 = mtowKg * 0.22; 
+            let capacityAh3 = Math.round(((maxBatWeightKg3 * energyDensityWhPerKg) / selectedBat.v) * 10) / 10;
+            const flightTimeMinutes3 = (capacityAh3 / totalCruiseCurrentDraw) * 60;
+            const requiredCRating3 = totalMaxCurrentDraw / capacityAh3;
+
+            document.getElementById('dashMotor3').innerText = `Seyir RPM: ${Math.round(cruiseRpm)}`;
+            if (requiredCRating3 > batteryMaxCRating) {
+                document.getElementById('dashBat3').innerHTML = `${selectedBat.s}S ${capacityAh3}Ah Lipo<br><span class="text-red-500 font-bold text-[10px] mt-1 block uppercase tracking-wider">UYARI: DEARJ LÝMÝTÝ ASILDI!</span>`;
+            } else {
+                document.getElementById('dashBat3').innerHTML = `${selectedBat.s}S ${capacityAh3}Ah Lipo<br><span class="text-slate-400 font-medium text-[10px] mt-1 block uppercase tracking-wider">Batarya: ~${maxBatWeightKg3.toFixed(1)} KG</span>`;
+            }
+            document.getElementById('flightTime3').innerText = flightTimeMinutes3 > 999 ? ">999" : Math.round(flightTimeMinutes3);
+
             switchView('dashboard-view');
         });
      </script>   
