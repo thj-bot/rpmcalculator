@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AeroPropel — Propulsion Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ─── TOKENS ───────────────────────────────────────────────────── */
+:root {
+  --bg:            #050f10;
+  --bg-mid:        #091518;
+  --surface-low:   #0d1f22;
+  --surface:       #122a2e;
+  --surface-high:  #1a3a40;
+  --surface-raise: #213f46;
+  --border-ghost:  rgba(77,200,185,0.12);
+  --teal-100:      #4dc8b9;
+  --teal-200:      #2db3a2;
+  --teal-300:      #1a9080;
+  --teal-glow:     rgba(77,200,185,0.18);
+  --green-acc:     #5dffc2;
+  --green-dim:     rgba(93,255,194,0.15);
+  --white:         #f0f8f7;
+  --muted:         #7fa8a3;
+  --danger:        #ff6b6b;
+  --warning:       #f5c842;
+  --font-display:  'Syne', sans-serif;
+  --font-body:     'Outfit', sans-serif;
+  --font-mono:     'DM Mono', monospace;
+  --r-sm:   6px;
+  --r-md:  12px;
+  --r-lg:  20px;
+  --r-xl:  28px;
+  --glass-bg:      rgba(13,31,34,0.55);
+  --glass-blur:    18px;
+  --shadow-atmo:   0 16px 40px rgba(0,0,0,0.45);
+}
+
+/* ─── RESET ────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--white);
+  font-family: var(--font-body);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── AMBIENT BACKGROUND ───────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 15% 20%, rgba(77,200,185,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 85% 70%, rgba(29,110,100,0.10) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 40% at 50% 50%, rgba(5,30,35,0.6) 0%, transparent 80%);
+  pointer-events: none;
+}
+
+/* noise overlay */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+/* ─── LAYOUT WRAPPER ───────────────────────────────────────────── */
+.app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+/* ─── NAV ──────────────────────────────────────────────────────── */
+nav {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 24px;
+  background: rgba(5,15,16,0.7);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-ghost);
+  position: sticky; top: 0; z-index: 100;
+}
+.nav-logo {
+  font-family: var(--font-display);
+  font-size: 1.2rem; font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--white);
+  display: flex; align-items: center; gap: 8px;
+}
+.nav-logo span { color: var(--teal-100); }
+.nav-badge {
+  font-family: var(--font-mono);
+  font-size: 0.62rem; letter-spacing: 0.1em;
+  color: var(--teal-100);
+  background: var(--green-dim);
+  border: 1px solid rgba(77,200,185,0.25);
+  border-radius: 99px; padding: 2px 10px;
+}
+.nav-status {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em;
+  color: var(--muted); text-transform: uppercase;
+}
+.status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green-acc); animation: pulse-dot 2s infinite; }
+@keyframes pulse-dot { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(93,255,194,0.4)} 50%{opacity:.7;box-shadow:0 0 0 5px rgba(93,255,194,0)} }
+
+/* ─── PAGE HEADER ──────────────────────────────────────────────── */
+.page-header {
+  padding: 40px 24px 28px;
+  max-width: 960px; margin: 0 auto; width: 100%;
+}
+.page-label {
+  font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.12em;
+  color: var(--teal-100); text-transform: uppercase; margin-bottom: 10px;
+}
+.page-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 6vw, 3rem);
+  font-weight: 800; letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--white);
+}
+.page-title em { font-style: normal; color: var(--teal-100); }
+.page-sub {
+  margin-top: 10px;
+  font-size: 0.9rem; color: var(--muted); font-weight: 300; max-width: 480px;
+  line-height: 1.6;
+}
+
+/* ─── MAIN CONTENT ─────────────────────────────────────────────── */
+main {
+  flex: 1;
+  padding: 0 24px 60px;
+  max-width: 960px; margin: 0 auto; width: 100%;
+  display: flex; flex-direction: column; gap: 20px;
+}
+
+/* ─── GLASS CARD ───────────────────────────────────────────────── */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--border-ghost);
+  border-radius: var(--r-xl);
+  padding: 28px;
+  box-shadow: var(--shadow-atmo), inset 0 1px 0 rgba(77,200,185,0.06);
+  transition: border-color 0.3s;
+}
+.glass-card:hover { border-color: rgba(77,200,185,0.22); }
+
+.card-title {
+  font-family: var(--font-display);
+  font-size: 0.95rem; font-weight: 700; letter-spacing: -0.01em;
+  color: var(--white);
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 24px;
+}
+.card-title svg { color: var(--teal-100); }
+.card-title .card-icon {
+  width: 32px; height: 32px; border-radius: var(--r-sm);
+  background: var(--green-dim);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── FORM GRID ────────────────────────────────────────────────── */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media(max-width: 560px) { .form-grid { grid-template-columns: 1fr; } }
+
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label {
+  font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.1em;
+  color: var(--muted); text-transform: uppercase;
+}
+
+/* ─── LIQUID GLASS INPUT ───────────────────────────────────────── */
+.input-wrap {
+  position: relative;
+  background: rgba(18,42,46,0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(77,200,185,0.15);
+  border-radius: var(--r-md);
+  display: flex; align-items: center;
+  overflow: hidden;
+  transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+}
+.input-wrap:focus-within {
+  border-color: rgba(77,200,185,0.5);
+  box-shadow: 0 0 0 3px rgba(77,200,185,0.08), 0 0 20px rgba(77,200,185,0.1);
+  background: rgba(22,55,60,0.7);
+}
+.input-wrap input, .input-wrap select {
+  width: 100%; background: transparent; border: none; outline: none;
+  padding: 14px 16px;
+  font-family: var(--font-mono); font-size: 1.05rem; font-weight: 400;
+  color: var(--white);
+  -webkit-appearance: none;
+}
+.input-wrap select { cursor: pointer; }
+.input-wrap select option { background: var(--surface-low); color: var(--white); }
+.input-unit {
+  padding: 0 14px 0 0;
+  font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.08em;
+  color: var(--teal-100); text-transform: uppercase; white-space: nowrap; flex-shrink: 0;
+}
+
+/* Range slider */
+.range-wrap { display: flex; flex-direction: column; gap: 8px; }
+.range-header { display: flex; justify-content: space-between; align-items: baseline; }
+.range-val {
+  font-family: var(--font-mono); font-size: 1rem; font-weight: 500; color: var(--white);
+}
+input[type="range"] {
+  -webkit-appearance: none; width: 100%; height: 4px;
+  border-radius: 99px;
+  background: linear-gradient(to right, var(--teal-200) 0%, var(--teal-200) var(--pct,50%), rgba(77,200,185,0.15) var(--pct,50%), rgba(77,200,185,0.15) 100%);
+  outline: none; cursor: pointer;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--teal-100);
+  border: 3px solid var(--bg-mid);
+  box-shadow: 0 0 10px rgba(77,200,185,0.5);
+  transition: transform 0.2s;
+}
+input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+/* ─── BLADE SELECTOR ───────────────────────────────────────────── */
+.blade-group { display: flex; gap: 10px; }
+.blade-btn {
+  flex: 1; padding: 12px 8px;
+  background: rgba(18,42,46,0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(77,200,185,0.15);
+  border-radius: var(--r-md);
+  font-family: var(--font-mono); font-size: 1rem; font-weight: 500;
+  color: var(--muted); cursor: pointer;
+  transition: all 0.22s; text-align: center;
+}
+.blade-btn:hover { border-color: rgba(77,200,185,0.35); color: var(--white); }
+.blade-btn.active {
+  background: linear-gradient(135deg, rgba(77,200,185,0.25), rgba(45,179,162,0.15));
+  border-color: var(--teal-100);
+  color: var(--teal-100);
+  box-shadow: 0 0 16px rgba(77,200,185,0.15);
+}
+
+/* ─── CALCULATE BUTTON ─────────────────────────────────────────── */
+.btn-calc {
+  width: 100%; padding: 17px 24px; margin-top: 20px;
+  background: linear-gradient(135deg, var(--teal-300) 0%, var(--teal-200) 50%, #38c9b8 100%);
+  border: none; border-radius: var(--r-md);
+  font-family: var(--font-display); font-size: 1rem; font-weight: 700; letter-spacing: 0.01em;
+  color: var(--bg);
+  cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: transform 0.18s, box-shadow 0.18s;
+  box-shadow: 0 4px 20px rgba(45,179,162,0.35);
+}
+.btn-calc::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+}
+.btn-calc:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(45,179,162,0.5); }
+.btn-calc:active { transform: translateY(0); }
+.btn-calc.loading { opacity: 0.7; pointer-events: none; }
+
+/* ─── RESULTS SECTION ──────────────────────────────────────────── */
+#results { display: none; animation: fadeUp 0.5s ease forwards; }
+@keyframes fadeUp { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: translateY(0); } }
+
+/* RPM Hero */
+.rpm-hero {
+  text-align: center; padding: 8px 0 24px;
+  border-bottom: 1px solid var(--border-ghost);
+  margin-bottom: 24px;
+}
+.rpm-label {
+  font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+}
+.rpm-value {
+  font-family: var(--font-display);
+  font-size: clamp(2.8rem, 10vw, 5rem);
+  font-weight: 800; letter-spacing: -0.04em;
+  color: var(--white);
+  line-height: 1;
+}
+.rpm-value span { color: var(--teal-100); }
+.rpm-meta {
+  display: flex; justify-content: center; gap: 20px; margin-top: 10px; flex-wrap: wrap;
+}
+.rpm-chip {
+  font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em;
+  padding: 4px 12px; border-radius: 99px;
+  background: var(--green-dim);
+  color: var(--teal-100);
+  border: 1px solid rgba(77,200,185,0.2);
+}
+
+/* Stats Row */
+.stats-row {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+  margin-bottom: 24px;
+}
+@media(max-width: 480px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+
+.stat-box {
+  background: rgba(26,58,64,0.5);
+  border: 1px solid var(--border-ghost);
+  border-radius: var(--r-md); padding: 14px;
+  text-align: center;
+}
+.stat-label {
+  font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 4px;
+}
+.stat-val {
+  font-family: var(--font-mono); font-size: 1.1rem; font-weight: 500;
+  color: var(--white);
+}
+.stat-unit { font-size: 0.65rem; color: var(--muted); }
+
+/* ─── COMBO CARDS ──────────────────────────────────────────────── */
+.combos-title {
+  font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 14px;
+}
+.combo-list { display: flex; flex-direction: column; gap: 10px; }
+.combo-card {
+  background: rgba(26,58,64,0.45);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-ghost);
+  border-radius: var(--r-lg); padding: 18px 20px;
+  display: flex; align-items: center; gap: 16px;
+  cursor: pointer;
+  transition: all 0.22s;
+}
+.combo-card:hover {
+  border-color: rgba(77,200,185,0.3);
+  background: rgba(30,70,75,0.6);
+  transform: translateX(3px);
+}
+.combo-card.top-pick {
+  border-color: rgba(77,200,185,0.35);
+  background: rgba(26,70,70,0.55);
+}
+.combo-rank {
+  font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.08em;
+  color: var(--muted); width: 24px; flex-shrink: 0; text-align: center;
+}
+.combo-rank.gold { color: var(--teal-100); }
+.combo-icon {
+  width: 44px; height: 44px; border-radius: var(--r-sm);
+  background: var(--green-dim); border: 1px solid rgba(77,200,185,0.2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; font-size: 1.2rem;
+}
+.combo-info { flex: 1; min-width: 0; }
+.combo-name {
+  font-family: var(--font-display); font-size: 0.95rem; font-weight: 700;
+  color: var(--white); letter-spacing: -0.01em;
+}
+.combo-detail {
+  font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.04em;
+  color: var(--muted); margin-top: 2px;
+}
+.combo-score {
+  text-align: right; flex-shrink: 0;
+}
+.combo-score-val {
+  font-family: var(--font-display); font-size: 1.1rem; font-weight: 700;
+  color: var(--teal-100);
+}
+.combo-score-label {
+  font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.08em;
+  color: var(--muted); text-transform: uppercase;
+}
+.top-badge {
+  font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--bg);
+  background: var(--teal-100);
+  border-radius: 99px; padding: 2px 8px; margin-left: 8px;
+}
+
+/* Safety meter */
+.safety-bar-wrap { margin-top: 12px; }
+.safety-bar-label {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.08em;
+  color: var(--muted); margin-bottom: 5px; text-transform: uppercase;
+}
+.safety-bar-track {
+  height: 6px; border-radius: 99px;
+  background: rgba(77,200,185,0.12);
+  overflow: hidden;
+}
+.safety-bar-fill {
+  height: 100%; border-radius: 99px;
+  background: linear-gradient(90deg, var(--teal-300), var(--teal-100));
+  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 0 8px rgba(77,200,185,0.4);
+}
+
+/* Thrust Chart */
+.thrust-chart {
+  display: flex; align-items: flex-end; gap: 4px; height: 80px;
+  margin-top: 16px; padding: 12px;
+  background: rgba(9,21,24,0.8);
+  border-radius: var(--r-md); border: 1px solid var(--border-ghost);
+}
+.thrust-bar {
+  flex: 1; border-radius: 3px 3px 0 0;
+  background: rgba(77,200,185,0.2);
+  position: relative;
+  transition: height 0.6s cubic-bezier(0.4,0,0.2,1);
+  cursor: pointer;
+}
+.thrust-bar.active { background: linear-gradient(180deg, var(--teal-100) 0%, var(--teal-300) 100%); }
+.thrust-bar:hover { background: rgba(77,200,185,0.4); }
+.chart-labels {
+  display: flex; justify-content: space-between;
+  font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.06em;
+  color: var(--muted); margin-top: 5px; padding: 0 12px; text-transform: uppercase;
+}
+
+/* Warning box */
+.warn-box {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(245,200,66,0.08);
+  border: 1px solid rgba(245,200,66,0.25);
+  border-radius: var(--r-md); padding: 12px 16px;
+  margin-top: 16px;
+}
+.warn-box svg { color: var(--warning); flex-shrink: 0; }
+.warn-box p {
+  font-size: 0.8rem; color: var(--warning); font-weight: 400; line-height: 1.5;
+}
+
+/* ─── FOOTER ───────────────────────────────────────────────────── */
+footer {
+  padding: 20px 24px; text-align: center;
+  background: rgba(5,15,16,0.5);
+  border-top: 1px solid var(--border-ghost);
+  font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+/* ─── SCROLLBAR ────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--surface-raise); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" style="color:var(--teal-100)">
+      <path d="M12 2L8 8H4l4 4-2 8 6-4 6 4-2-8 4-4h-4z"/>
+    </svg>
+    Aero<span>Propel</span>
+  </div>
+  <div class="nav-badge">v2.4 CALC</div>
+  <div class="nav-status">
+    <div class="status-dot"></div>
+    <span>Laminar Flow Optimized</span>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-label">// Engineering Workbench</div>
+  <h1 class="page-title">Propeller <em>Geometry</em><br>& Performance</h1>
+  <p class="page-sub">Pervane geometrisi ve malzeme parametrelerini girerek maksimum güvenli RPM ile optimal motor-batarya kombinasyonunu hesaplayın.</p>
+</div>
+
+<!-- MAIN -->
+<main>
+
+  <!-- INPUT CARD -->
+  <div class="glass-card">
+    <div class="card-title">
+      <div class="card-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+        </svg>
+      </div>
+      Geometry Parameters
+    </div>
+
+    <div class="form-grid">
+      <!-- Diameter -->
+      <div class="form-group">
+        <label class="form-label">Diameter</label>
+        <div class="input-wrap">
+          <input type="number" id="inp-diameter" value="10" min="3" max="30" step="0.1" placeholder="10.0">
+          <span class="input-unit">inch</span>
+        </div>
+      </div>
+
+      <!-- Pitch -->
+      <div class="form-group">
+        <label class="form-label">Pitch</label>
+        <div class="input-wrap">
+          <input type="number" id="inp-pitch" value="4.5" min="1" max="20" step="0.1" placeholder="4.5">
+          <span class="input-unit">inch</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blade Count -->
+    <div class="form-group" style="margin-top:16px">
+      <label class="form-label">Number of Blades</label>
+      <div class="blade-group">
+        <button class="blade-btn active" data-blades="2">2</button>
+        <button class="blade-btn" data-blades="3">3</button>
+        <button class="blade-btn" data-blades="4">4</button>
+        <button class="blade-btn" data-blades="5">5</button>
+      </div>
+    </div>
+
+    <!-- Material -->
+    <div class="form-group" style="margin-top:16px">
+      <label class="form-label">Material</label>
+      <div class="input-wrap">
+        <select id="inp-material">
+          <option value="carbon">Carbon Fiber Reinforced</option>
+          <option value="glass">Fiberglass Composite</option>
+          <option value="wood">Beech Wood</option>
+          <option value="plastic">ABS Plastic</option>
+          <option value="nylon">Nylon PA66</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Target Thrust Slider -->
+    <div class="form-group" style="margin-top:16px">
+      <label class="form-label">Target Thrust</label>
+      <div class="range-wrap">
+        <div class="range-header">
+          <span class="form-label">Min</span>
+          <span class="range-val" id="thrust-display">500 g</span>
+          <span class="form-label">Max</span>
+        </div>
+        <input type="range" id="inp-thrust" min="100" max="5000" step="50" value="500">
+      </div>
+    </div>
+
+    <button class="btn-calc" id="btn-calc" onclick="calculate()">
+      Run Stress Calculation
+    </button>
+  </div>
+
+  <!-- RESULTS CARD -->
+  <div class="glass-card" id="results">
+
+    <!-- RPM HERO -->
+    <div class="rpm-hero">
+      <div class="rpm-label">Calculated Strength Limit</div>
+      <div class="rpm-value"><span id="res-rpm">—</span> <span style="font-size:1.5rem;color:var(--muted)">RPM</span></div>
+      <div class="rpm-meta">
+        <span class="rpm-chip" id="res-safety">—</span>
+        <span class="rpm-chip" id="res-tip">—</span>
+        <span class="rpm-chip" id="res-power">—</span>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-label">Tip Speed</div>
+        <div class="stat-val"><span id="stat-tip">—</span> <span class="stat-unit">m/s</span></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Est. Thrust</div>
+        <div class="stat-val"><span id="stat-thrust">—</span> <span class="stat-unit">g</span></div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">Power Load</div>
+        <div class="stat-val"><span id="stat-power">—</span> <span class="stat-unit">W</span></div>
+      </div>
+    </div>
+
+    <!-- SAFETY BAR -->
+    <div class="safety-bar-wrap">
+      <div class="safety-bar-label">
+        <span>Structural Safety</span>
+        <span id="safety-pct">—</span>
+      </div>
+      <div class="safety-bar-track">
+        <div class="safety-bar-fill" id="safety-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <!-- THRUST CHART -->
+    <div id="thrust-chart" class="thrust-chart"></div>
+    <div class="chart-labels">
+      <span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span>
+    </div>
+
+    <!-- COMBOS -->
+    <div style="margin-top:28px">
+      <div class="combos-title">// Optimal Motor · Battery Combinations</div>
+      <div class="combo-list" id="combo-list"></div>
+    </div>
+
+    <div id="warn-area"></div>
+
+  </div>
+
+</main>
+
+<footer>
+  AeroPropel Engineering Workbench · Hesaplamalar teorik modeldir, gerçek koşullarla doğrulayın · © 2026
+</footer>
+
+</div><!-- .app -->
+
+<script>
+/* ─── STATE ──────────────────────────────────────────────────── */
+let selectedBlades = 2;
+
+/* ─── MATERIAL PROPS ─────────────────────────────────────────── */
+const MATERIALS = {
+  carbon:  { label:'Carbon Fiber', maxTip: 230, safetyFactor: 1.9, kv_bias: 1.0 },
+  glass:   { label:'Fiberglass',   maxTip: 170, safetyFactor: 1.7, kv_bias: 0.85 },
+  wood:    { label:'Beech Wood',   maxTip: 140, safetyFactor: 1.6, kv_bias: 0.8 },
+  plastic: { label:'ABS Plastic',  maxTip: 110, safetyFactor: 1.4, kv_bias: 0.7 },
+  nylon:   { label:'Nylon PA66',   maxTip: 125, safetyFactor: 1.5, kv_bias: 0.75 },
+};
+
+/* ─── MOTOR DB ───────────────────────────────────────────────── */
+const MOTORS = [
+  { name:'SunnyDrive 2204',   kv:2300, peakA:20, weight:28,  size:'2204', emoji:'⚡' },
+  { name:'AeroMax 2207',      kv:1950, peakA:45, weight:52,  size:'2207', emoji:'🔥' },
+  { name:'Titan V2 Pro',      kv:1750, peakA:52, weight:61,  size:'2207', emoji:'🚀' },
+  { name:'SwiftCore 2306',    kv:2450, peakA:38, weight:44,  size:'2306', emoji:'⚡' },
+  { name:'AlphaForce 3508',   kv:700,  peakA:60, weight:105, size:'3508', emoji:'💪' },
+  { name:'OmegaDrive 4014',   kv:400,  peakA:85, weight:190, size:'4014', emoji:'🏋️' },
+  { name:'NanoFly 1408',      kv:3600, peakA:14, weight:12,  size:'1408', emoji:'🦅' },
+  { name:'TorqueMax 5010',    kv:300,  peakA:110,weight:250, size:'5010', emoji:'⚙️' },
+];
+
+/* ─── BATTERY DB ─────────────────────────────────────────────── */
+const BATTERIES = [
+  { cells:2, label:'2S', voltage:7.4,  cap:450,   discharge:45 },
+  { cells:3, label:'3S', voltage:11.1, cap:1300,  discharge:40 },
+  { cells:4, label:'4S', voltage:14.8, cap:1500,  discharge:35 },
+  { cells:6, label:'6S', voltage:22.2, cap:2200,  discharge:30 },
+  { cells:8, label:'8S', voltage:29.6, cap:3000,  discharge:25 },
+  { cells:10,label:'10S',voltage:37.0, cap:4000,  discharge:20 },
+];
+
+/* ─── BLADE BUTTONS ──────────────────────────────────────────── */
+document.querySelectorAll('.blade-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.blade-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedBlades = parseInt(btn.dataset.blades);
+  });
+});
+
+/* ─── RANGE SLIDER ───────────────────────────────────────────── */
+const thrustSlider = document.getElementById('inp-thrust');
+const thrustDisplay = document.getElementById('thrust-display');
+function updateSlider() {
+  const v = thrustSlider.value, min = thrustSlider.min, max = thrustSlider.max;
+  const pct = ((v - min) / (max - min)) * 100;
+  thrustSlider.style.setProperty('--pct', pct + '%');
+  thrustDisplay.textContent = v >= 1000 ? (v/1000).toFixed(1)+'kg' : v+'g';
+}
+thrustSlider.addEventListener('input', updateSlider);
+updateSlider();
+
+/* ─── CALCULATE ──────────────────────────────────────────────── */
+function calculate() {
+  const D_in   = parseFloat(document.getElementById('inp-diameter').value) || 10;
+  const P_in   = parseFloat(document.getElementById('inp-pitch').value) || 4.5;
+  const matKey = document.getElementById('inp-material').value;
+  const targetG = parseInt(thrustSlider.value);
+  const blades  = selectedBlades;
+  const mat     = MATERIALS[matKey];
+
+  // m
+  const D_m = D_in * 0.0254;
+
+  // Max RPM from tip speed limit
+  const maxRPM_raw = (mat.maxTip * 60) / (Math.PI * D_m);
+  // Apply blade penalty (more blades → more stress → lower safe RPM)
+  const bladePenalty = 1 - (blades - 2) * 0.04;
+  const maxRPM = Math.round(maxRPM_raw * bladePenalty / 50) * 50;
+
+  // Estimated thrust (simple actuator disk model approximation)
+  // T(g) ≈ k * D^4 * RPM^2  (empirical simplified)
+  const k = 1.5e-8 * blades;
+  const thrustAtMax_kg = k * Math.pow(D_in, 4) * Math.pow(maxRPM, 2);
+  const thrustAtMax_g  = Math.round(thrustAtMax_kg * 1000);
+
+  // Tip speed at max RPM
+  const tipSpeedMS = Math.round((Math.PI * D_m * maxRPM) / 60);
+
+  // Estimated power (empirical)
+  const powerW = Math.round(0.00012 * blades * Math.pow(D_in, 2) * P_in * maxRPM * 0.001);
+
+  // Safety factor score (0-100)
+  const safetyScore = Math.min(98, Math.round((mat.safetyFactor / 2.0) * 100));
+
+  // RPM at target thrust
+  const rpmForTarget = Math.min(maxRPM, Math.round(Math.sqrt(targetG / (k * Math.pow(D_in,4) * 1000)) / 50) * 50);
+
+  // ── Update RPM Hero
+  document.getElementById('res-rpm').textContent = maxRPM.toLocaleString();
+  document.getElementById('res-safety').textContent = `Safety ×${mat.safetyFactor}`;
+  document.getElementById('res-tip').textContent    = `Tip ${tipSpeedMS} m/s`;
+  document.getElementById('res-power').textContent  = `~${powerW}W`;
+
+  // ── Update Stats
+  document.getElementById('stat-tip').textContent    = tipSpeedMS;
+  document.getElementById('stat-thrust').textContent = thrustAtMax_g.toLocaleString();
+  document.getElementById('stat-power').textContent  = powerW;
+
+  // ── Safety Bar
+  document.getElementById('safety-pct').textContent = safetyScore + '%';
+  setTimeout(() => {
+    document.getElementById('safety-fill').style.width = safetyScore + '%';
+  }, 200);
+
+  // ── Thrust Chart (7 throttle points)
+  const chartEl = document.getElementById('thrust-chart');
+  chartEl.innerHTML = '';
+  const points = 7;
+  const maxH = 56; // px
+  for (let i = 0; i < points; i++) {
+    const pct = i / (points - 1);
+    const thr = Math.round(thrustAtMax_g * Math.pow(pct, 1.8));
+    const h   = Math.max(4, Math.round(maxH * Math.pow(pct, 1.8)));
+    const bar = document.createElement('div');
+    bar.className = 'thrust-bar' + (i === points - 1 ? ' active' : '');
+    bar.style.height = h + 'px';
+    bar.title = `${Math.round(pct*100)}% throttle → ${thr}g`;
+    chartEl.appendChild(bar);
+  }
+
+  // ── Motor + Battery Combos
+  const combos = buildCombos(maxRPM, targetG, thrustAtMax_g, D_in, P_in, matKey);
+  renderCombos(combos);
+
+  // ── Warning
+  const warnArea = document.getElementById('warn-area');
+  warnArea.innerHTML = '';
+  if (matKey === 'plastic' || matKey === 'nylon') {
+    warnArea.innerHTML = `
+      <div class="warn-box">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <p>${mat.label} malzeme yüksek RPM'de düşük yorulma dayanımına sahiptir. Yüksek performans uygulamalarında kompozit malzeme tercih edilmesi önerilir.</p>
+      </div>`;
+  }
+
+  // ── Show
+  const resEl = document.getElementById('results');
+  resEl.style.display = 'block';
+  resEl.style.animation = 'none';
+  void resEl.offsetHeight;
+  resEl.style.animation = '';
+  resEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ─── BUILD COMBOS ───────────────────────────────────────────── */
+function buildCombos(maxRPM, targetG, thrustG, D_in, P_in, matKey) {
+  const mat = MATERIALS[matKey];
+  const results = [];
+
+  for (const motor of MOTORS) {
+    for (const bat of BATTERIES) {
+      // Estimated no-load RPM
+      const noLoadRPM = motor.kv * bat.voltage;
+
+      // Estimated loaded RPM (rough ~80% under prop load)
+      const loadedRPM = noLoadRPM * 0.78;
+
+      // Only valid if loaded RPM is within safe range
+      if (loadedRPM > maxRPM * 1.05) continue; // over-revving
+
+      // Power budget
+      const maxPower = bat.voltage * motor.peakA;
+      if (maxPower < 30) continue;
+
+      // Estimated thrust from this combo
+      const k = 1.5e-8 * 2; // base 2 blades
+      const comboThrust_g = Math.round(k * Math.pow(D_in,4) * Math.pow(loadedRPM,2) * 1000);
+      if (comboThrust_g < targetG * 0.5) continue;
+
+      // Efficiency score: how close are we to target thrust without over-stressing
+      const rpmUtilPct = loadedRPM / maxRPM;
+      const thrustRatio = Math.min(comboThrust_g, targetG * 2) / (targetG || 1);
+      const score = Math.round(
+        (thrustRatio * 40) +
+        ((1 - Math.abs(rpmUtilPct - 0.80)) * 35) +
+        (mat.kv_bias * 25)
+      );
+
+      if (score < 20) continue;
+
+      results.push({
+        motor, bat,
+        loadedRPM: Math.round(loadedRPM),
+        thrustG: comboThrust_g,
+        maxPower,
+        score,
+        rpmUtil: Math.round(rpmUtilPct * 100),
+      });
+    }
+  }
+
+  results.sort((a, b) => b.score - a.score);
+  return results.slice(0, 5);
+}
+
+/* ─── RENDER COMBOS ──────────────────────────────────────────── */
+function renderCombos(combos) {
+  const list = document.getElementById('combo-list');
+  list.innerHTML = '';
+
+  if (!combos.length) {
+    list.innerHTML = `<p style="color:var(--muted);font-family:var(--font-mono);font-size:.8rem;padding:12px">Bu parametre kombinasyonu için uygun motor-batarya bulunamadı. Çap veya pitch değerlerini düzenleyin.</p>`;
+    return;
+  }
+
+  combos.forEach((c, i) => {
+    const card = document.createElement('div');
+    card.className = 'combo-card' + (i === 0 ? ' top-pick' : '');
+    card.innerHTML = `
+      <div class="combo-rank ${i===0?'gold'}">${i===0?'★':i+1}</div>
+      <div class="combo-icon">${c.motor.emoji}</div>
+      <div class="combo-info">
+        <div class="combo-name">
+          ${c.motor.name}
+          ${i===0?'<span class="top-badge">TOP PICK</span>':''}
+        </div>
+        <div class="combo-detail">
+          ${c.motor.kv} KV · ${c.bat.label} ${c.bat.voltage}V LiPo · ~${c.loadedRPM.toLocaleString()} RPM yük altında
+        </div>
+        <div class="combo-detail" style="margin-top:3px;color:var(--teal-100)">
+          Tahmini İtiş: ${c.thrustG.toLocaleString()}g · Max Güç: ${c.maxPower}W · RPM Kullanımı: %${c.rpmUtil}
+        </div>
+      </div>
+      <div class="combo-score">
+        <div class="combo-score-val">${c.score}</div>
+        <div class="combo-score-label">Puan</div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+/* ─── ENTER KEY ──────────────────────────────────────────────── */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') calculate();
+});
+</script>
+</body>
+</html>
