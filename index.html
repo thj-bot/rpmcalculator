@@ -139,9 +139,34 @@
                          </select>
                      </div>
 
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-widest font-label ml-1">Motor Mimarisi</label>
+                            <div class="relative">
+                                <select id="motorConfig" class="w-full bg-white/70 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-4 text-base font-bold text-slate-700 font-headline transition-all outline-none appearance-none cursor-pointer">
+                                    <option value="1">Tek Motor (1x)</option>
+                                    <option value="2" selected>Çift Motor (2x)</option>
+                                </select>
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 pointer-events-none">expand_more</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-slate-500 uppercase tracking-widest font-label ml-1">Pala Sayısı</label>
+                            <div class="relative">
+                                <select id="bladeCount" class="w-full bg-white/70 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-4 text-base font-bold text-slate-700 font-headline transition-all outline-none appearance-none cursor-pointer">
+                                    <option value="2" selected>2 Palalı (Standart)</option>
+                                    <option value="3">3 Palalı (Yüksek Tork)</option>
+                                </select>
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400 pointer-events-none">expand_more</span>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="pt-4 border-t border-teal-100/50 mt-4">
                         <span class="text-xs font-bold text-teal-500 tracking-[0.2em] uppercase font-label block mb-4">Platform (Seyir) Girdileri</span>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        
                             <div class="flex flex-col gap-2">
                                 <label class="text-xs font-bold text-slate-500 uppercase tracking-widest font-label ml-1">Kalkış Ağırlığı (MTOW)</label>
                                 <div class="relative">
@@ -149,14 +174,24 @@
                                     <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">KG</span>
                                 </div>
                             </div>
+                            
                             <div class="flex flex-col gap-2">
-                                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest font-label ml-1">L/D Oranı (Süzülme)</label>
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest font-label ml-1">L/D Oranı</label>
                                 <div class="relative">
                                     <input id="ldRatio" class="w-full bg-white/70 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-4 text-xl font-bold font-headline transition-all outline-none" type="number" step="0.1" value="10.0"/>
                                     <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">ORAN</span>
                                 </div>
-                                <p class="text-[10px] text-slate-400 ml-1 mt-1 font-medium">Sabit kanatlı platformlar için genelde 8-12 arasıdır.</p>
                             </div>
+
+                            <div class="flex flex-col gap-2">
+                                <label class="text-xs font-bold text-slate-500 uppercase tracking-widest font-label ml-1">Hedef Seyir Hızı</label>
+                                <div class="relative">
+                                    <input id="cruiseSpeed" class="w-full bg-white/70 border border-white focus:border-teal-400 focus:ring-2 focus:ring-teal-100 rounded-xl px-4 py-4 text-xl font-bold font-headline transition-all outline-none" type="number" step="0.5" value="18.0"/>
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">M/S</span>
+                                </div>
+                                <p class="text-[10px] text-slate-400 ml-1 mt-1 font-medium">J (İlerleme oranı) analizi için.</p>
+                            </div>
+                            
                         </div>
                     </div>
 
@@ -368,16 +403,53 @@
             "racing_electric": 270000
         };
 
-        // Aerodinamik Katsayılar Sözlüğü (Ortalama Statik Ct ve Cp değerleri)
-        const aeroCoefficients = {
-            "glow": { ct: 0.13, cp: 0.06 },
-            "thin_electric": { ct: 0.11, cp: 0.04 },
-            "folding": { ct: 0.09, cp: 0.035 },
-            "multirotor": { ct: 0.10, cp: 0.045 },
-            "slow_flyer": { ct: 0.12, cp: 0.05 },
-            "racing_ic": { ct: 0.14, cp: 0.07 },
-            "racing_electric": { ct: 0.14, cp: 0.07 }
-        };
+        /**
+         * Verilen hiz ve devir için dinamik Ct ve Cp katsayilarini hesaplar.
+         * @param {number} p_inch - Pervane Hatvesi (inç)
+         * @param {number} d_inch - Pervane Çapi (inç)
+         * @param {number} v_mps  - Uçaðýn Hava Hizi (m/s)
+         * @param {number} n_rps  - Pervanenin Saniyedeki Devri (RPS)
+         * @param {number} bladeCount - Pala Sayisi (2 veya 3)
+         * @returns {object} { ct, cp, J }
+         */
+        function getDynamicCoefficients(p_inch, d_inch, v_mps, n_rps, bladeCount = 2) {
+            const d_meter = d_inch * 0.0254;
+            
+            // 1. Hatve/Çap Orani (k) ve Statik Baþlangiç Noktalari
+            const k = p_inch / d_inch;
+            const ct_static = 0.1 * k + 0.04; // V=0 anindaki kaba itki katsayisi
+            const cp_static = 0.05 * k + 0.01; // V=0 anindaki kaba güç katsayisi
+
+            // 2. Ýlerleme Orani (Advance Ratio - J)
+            // Eðer Motor dönmüyorsa (n_rps=0), tanimsiz olmamasi için J'yi 0 yapiyoruz
+            let J = 0;
+            if (n_rps > 0) {
+                J = v_mps / (n_rps * d_meter);
+            }
+
+            // 3. J'ye Bagli Parabolik Düçüç (Aerodinamik Simülasyon)
+            // Pervanenin itkisinin sifirlandiði teorik nokta J ² k noktasidir.
+            let ct_dynamic = ct_static * (1 - Math.pow((J / k), 2));
+            
+            // Güç ihtiyaci da hizlandikça düçer ama itki kadar hizli sifirlanmaz (sürtünme kayiplari vs.)
+            let cp_dynamic = cp_static * (1 - 0.5 * Math.pow((J / k), 2));
+
+            // YENÝ EKLENEN: 3 Palalı Pervane Çarpanları
+            if (bladeCount === 3) {
+                ct_dynamic *= 1.35; // Ýtki %35 artar
+                cp_dynamic *= 1.50; // Güç (Tork) ihtiyaci %50 artar
+            }
+
+            // Sinirlandirmalar (Ýtki negatife düçmesin, pervane fren yapmiyorsa)
+            if (ct_dynamic < 0) ct_dynamic = 0;
+            if (cp_dynamic < 0.01) cp_dynamic = 0.01; // Minimum sürtünme gücü
+
+            return { 
+                ct: ct_dynamic, 
+                cp: cp_dynamic, 
+                J: J.toFixed(2) 
+            };
+        }
 
         // Hesaplama ve Dashboard'a veri aktarma
         document.getElementById('calculateBtn').addEventListener('click', () => {
@@ -391,6 +463,10 @@
             const mtowKg = parseFloat(document.getElementById('mtowWeight').value);
             const ldRatio = parseFloat(document.getElementById('ldRatio').value);
 
+            // Arayüzden yeni eklenen Pala Sayisini ve Motor Konfigürasyonunu çek
+            const bladeCount = parseInt(document.getElementById('bladeCount').value) || 2;
+            const numMotors = parseInt(document.getElementById('motorConfig').value) || 2; // Sabit "const numMotors = 2;" satirini sileceðiz
+
             if (!d_inch || !p_inch || d_inch <= 0 || !mtowKg || !ldRatio) {
                 alert('Lütfen geçerli deðerler girin.');
                 return;
@@ -403,9 +479,11 @@
             const rho = 1.225; // kg/m^3
             const d_meter = d_inch * 0.0254; 
             const n_rps = maxRpm / 60; 
-            
-            const ct = aeroCoefficients[selectedType].ct;
-            const cp = aeroCoefficients[selectedType].cp;
+
+            // EKSÝ SÖZLÜÐÜ SÝLÝP, DÝNAMÝK FONKSÝYONU HIZ=0 (STATÝK) ÝÇÝN ÇAÐIRIYORUZ
+            const staticAero = getDynamicCoefficients(p_inch, d_inch, 0, n_rps, bladeCount);
+            const ct = staticAero.ct;
+            const cp = staticAero.cp;
 
             const thrustNewtons = ct * rho * Math.pow(n_rps, 2) * Math.pow(d_meter, 4);
             const thrustKg = (thrustNewtons / 9.81).toFixed(2); 
@@ -414,30 +492,40 @@
             const areaCm = Math.PI * Math.pow((d_inch * 2.54) / 2, 2);
             const discLoading = ((thrustKg * 1000) / areaCm).toFixed(1);
 
-            // 3. Ýdeal Voltajý (S) Bulma (Kablolar erimesin diye 45A sýnýrýný hedefler)
-            const motorEfficiency = 0.85; 
-            const loadFactor = 0.85; 
-            const elecPowerW = powerW / motorEfficiency;
+            // ---------------------------------------------------------
+            // 3. TOP-DOWN BOYUTLANDIRMA (SIZING) ALGORÝTMASI
+            // ---------------------------------------------------------
             
-            // Gerçekçi Endüstri Standartlarý (10S ve 14S Çýkarýldý)
+            // a. Güç Daðýlýmý ve Elektriksel Güç
+            // 2. adýmda hesaplanan powerW, BÝR adet pervanenin çektiði mekanik güçtür.
+            // Tam gaz (statik) durumunda motor zorlandýðý için elektriksel verimi %75 alýyoruz.
+            const staticMotorEfficiency = 0.75; 
+            const elecPowerPerMotorW = powerW / staticMotorEfficiency;
+
+            // b. Hedef Voltaj (S) Bulma
+            // ESC ve motor sargýlarýný korumak için hedef tepe akýmýný 45A civarýnda tutmaya çalýþýyoruz.
+            const targetMaxCurrentA = 45;
+            const minRequiredVoltage = elecPowerPerMotorW / targetMaxCurrentA;
+            
+            // c. Gerçekçi Endüstri Standartlarý
             const batteryTiers = [
                 { s: 3, v: 11.1 }, { s: 4, v: 14.8 }, { s: 6, v: 22.2 },
-                { s: 8, v: 29.6 }, { s: 12, v: 44.4 }
+                { s: 8, v: 29.6 }, { s: 10, v: 37.0 }, { s: 12, v: 44.4 }
             ];
 
-            let selectedBat = batteryTiers[batteryTiers.length - 1]; 
-            let currentDraw = 0;
-
+            let selectedBat = batteryTiers[batteryTiers.length - 1]; // Varsayýlan olarak en büyük
             for (let tier of batteryTiers) {
-                currentDraw = elecPowerW / tier.v;
-                if (currentDraw <= 45) { 
+                if (tier.v >= minRequiredVoltage) { 
                     selectedBat = tier;
                     break;
                 }
             }
-            currentDraw = (elecPowerW / selectedBat.v).toFixed(1);
-            const numMotors = 2; // Çift Motor Mimarisi
-            const totalMaxCurrentDraw = currentDraw * numMotors;
+            
+            // d. Seçilen bataryaya göre motor baþýna düşen GÜNCEL TEPE AKIMI
+            const maxCurrentPerMotor = elecPowerPerMotorW / selectedBat.v;
+            
+            // e. Sistemin (Bataryanýn) göreceði Toplam Akým
+            const totalMaxCurrentDraw = maxCurrentPerMotor * numMotors;
 
             // 4. AÐIRLIK BÜTÇESI (WEIGHT BUDGETING) ILE DÝNAMÝK KAPASÝTE (Ah)
             // Uçaðýn toplam aðýrlýðýnýn maksimum %30'u batarya olabilir
@@ -454,24 +542,74 @@
             const requiredCRating = totalMaxCurrentDraw / capacityAh;
             const dischargePercent = Math.min((requiredCRating / batteryMaxCRating) * 100, 100).toFixed(0);
 
-            const escLimitA = 60;
-            const escLoadPercent = Math.min((currentDraw / escLimitA) * 100, 100).toFixed(0);
+            // c. Ýdeal Kv Hesaplamasý
+            // maxRpm'e ulaşmak için gereken motor sabiti (Yük altýnda voltajýn %82'si devire dönüşür varsayýmý)
+            const loadRpmFactor = 0.82;
+            let idealKv = maxRpm / (selectedBat.v * loadRpmFactor);
+            
+            // Kv deðerini estetik olarak endüstri standartlarýna yuvarla (Örn: 352 -> 350, 412 -> 410)
+            idealKv = Math.round(idealKv / 10) * 10;
 
-            // 6. Seyir (Cruise) ve Gerçek Uçuç Süresi Analizi
+            // d. ESC Seçimi (%20 Güvenlik Marjý ile)
+            const requiredEscRating = maxCurrentPerMotor * 1.20; // %20 marj
+            const escStandardSizes = [20, 30, 40, 50, 60, 80, 100, 120, 160, 200]; // Piyasada bulunan ESC'ler
+            
+            let recommendedEsc = escStandardSizes[escStandardSizes.length - 1];
+            for(let size of escStandardSizes) {
+                if(size >= requiredEscRating) {
+                    recommendedEsc = size;
+                    break;
+                }
+            }
+
+            // Dashboard'daki ESC Yük Barý için dinamik hesaplama
+            const escLimitA = recommendedEsc;
+            const escLoadPercent = Math.min((maxCurrentPerMotor / escLimitA) * 100, 100).toFixed(0);
+            
+            // Seyir (Cruise) analizi için motor verimini %85'e çekiyoruz (Seyirde motor rahatlar)
+            const cruiseMotorEfficiency = 0.85;
+
+            // Arayüzden seyir hizini al (Örn: 18 m/s) - HTML'e bu ID'ye sahip bir input eklemelisin
+            const cruiseSpeedMps = parseFloat(document.getElementById('cruiseSpeed').value) || 15; 
+
+            // Istenen toplam itki
             const requiredCruiseThrustTotalN = (mtowKg * 9.81) / ldRatio;
             const requiredCruiseThrustPerMotorN = requiredCruiseThrustTotalN / numMotors;
 
-            const cruise_n_rps = Math.sqrt(requiredCruiseThrustPerMotorN / (ct * rho * Math.pow(d_meter, 4)));
+            // ÝTERATÝF SEYÝR RPM BULMA ALGORÝTMASI
+            // Hedef itkiye ulasana kadar RPM'i artirarak dogru çaliçma noktasini (J) buluyoruz.
+            let cruise_n_rps = 10; // Baçlangiç tahmini (10 devir/sn)
+            let currentThrust = 0;
+            let finalCt = 0;
+            let finalCp = 0;
+            let finalJ = 0;
+
+            // Istenen itkiye ulasana kadar RPM'i küçük adimlarla artir (Max 300 RPS = 18000 RPM siniri)
+            while (currentThrust < requiredCruiseThrustPerMotorN && cruise_n_rps < 300) {
+                cruise_n_rps += 0.5; // Yarim devir/sn artir
+                
+                // O anki devir ve hiz için dinamik katsayilari al
+                const aero = getDynamicCoefficients(p_inch, d_inch, cruiseSpeedMps, cruise_n_rps, bladeCount);
+                finalCt = aero.ct;
+                finalCp = aero.cp;
+                finalJ = aero.J;
+                
+                // Bu katsayi ile üretilen itkiyi kontrol et
+                currentThrust = finalCt * rho * Math.pow(cruise_n_rps, 2) * Math.pow(d_meter, 4);
+            }
+
             const cruiseRpm = cruise_n_rps * 60;
-
-            const cruisePowerW = cp * rho * Math.pow(cruise_n_rps, 3) * Math.pow(d_meter, 5);
-            const cruiseCurrentDrawA = (cruisePowerW / motorEfficiency) / selectedBat.v;
-            
+            const cruisePowerW = finalCp * rho * Math.pow(cruise_n_rps, 3) * Math.pow(d_meter, 5);
+            const cruiseCurrentDrawA = (cruisePowerW / cruiseMotorEfficiency) / selectedBat.v;
             const totalCruiseCurrentDraw = cruiseCurrentDrawA * numMotors;
-            const flightTimeMinutes = (capacityAh / totalCruiseCurrentDraw) * 60;
 
+            // Uçuç Süresi (Bataryanin %80'i)
+            const flightTimeMinutes = ((capacityAh * 0.8) / totalCruiseCurrentDraw) * 60;
+
+            // ---------------------------------------------------------
             // 7. DOM (Ekran) Güncellemeleri
-            document.getElementById('dashTitle').innerText = `Analiz: ${typeName} ${d_inch}x${p_inch}`;
+            // ---------------------------------------------------------
+            document.getElementById('dashTitle').innerText = `Analiz: ${typeName} ${d_inch}x${p_inch} (${bladeCount} Palalı)`;
             document.getElementById('dashRpm').innerText = new Intl.NumberFormat('tr-TR').format(maxRpm);
             document.getElementById('dashThrust').innerText = thrustKg;
             document.getElementById('dashPower').innerText = powerW;
@@ -485,14 +623,20 @@
             document.getElementById('batDischargeBar').className = `h-full transition-all duration-700 ${dischargePercent > 85 ? 'bg-red-500' : 'bg-amber-400'}`;
             document.getElementById('escLoadBar').className = `h-full transition-all duration-700 ${escLoadPercent > 85 ? 'bg-red-500' : 'bg-sky-400'}`;
 
-            // Alt Kart (Optimum Seçim)
-            document.getElementById('dashMotor1').innerText = `Seyir RPM: ${Math.round(cruiseRpm)}`;
+            // ---------------------------------------------------------
+            // ALT KARTLAR (DÝNAMÝK MÝMARÝ ÖNERÝLERÝ)
+            // ---------------------------------------------------------
             
-            // Eðer tam gazda deþarj limiti aþýlýrsa kýrmýzý ile uyar, yoksa sadece batarya bilgisini yaz
+            // Kart 1: Optimum Seçim (Sistem Önerisi)
+            // Zümrüdüanka gibi projelerde KTR aþamasýnda jüriye sunulacak ana mimari çýktýsý
+            let motorConfigText = numMotors === 1 ? "Tek Motor" : "Çift Motor";
+            document.getElementById('dashMotor1').innerText = `~${idealKv} Kv Motor | ${recommendedEsc}A ESC`;
+            
+            // Eðer tam gazda deþarj limiti aþýlýrsa kýrmýzý ile uyar, yoksa temiz bir özet ver
             if (requiredCRating > batteryMaxCRating) {
-                document.getElementById('dashBat1').innerHTML = `${selectedBat.s}S ${capacityAh}Ah Lipo (Seyir: ${totalCruiseCurrentDraw.toFixed(1)}A)<br><span class="text-red-500 font-bold text-[10px] mt-1 block uppercase tracking-wider">UYARI: TAM GAZDA PIL DEARJ LIMITI (${requiredCRating.toFixed(1)}C) ASILDI! PIL YANABILIR.</span>`;
+                document.getElementById('dashBat1').innerHTML = `${selectedBat.s}S ${capacityAh}Ah Lipo (${motorConfigText})<br><span class="text-red-500 font-bold text-[10px] mt-1 block uppercase tracking-wider">UYARI: TAM GAZDA PÝL DEÞARJ LÝMÝTÝ AÞILDI!</span>`;
             } else {
-                document.getElementById('dashBat1').innerHTML = `${selectedBat.s}S ${capacityAh}Ah Lipo (Seyir: ${totalCruiseCurrentDraw.toFixed(1)}A)<br><span class="text-teal-600 font-bold text-[10px] mt-1 block uppercase tracking-wider">BATARYA AGIRLIGI: ~${maxBatteryWeightKg.toFixed(1)} KG</span>`;
+                document.getElementById('dashBat1').innerHTML = `${selectedBat.s}S (${selectedBat.v}V) ${capacityAh}Ah Lipo<br><span class="text-teal-600 font-bold text-[10px] mt-1 block uppercase tracking-wider">MÝMARÝ: ${motorConfigText} | SEYÝR: ${(totalCruiseCurrentDraw/numMotors).toFixed(1)}A / Motor</span>`;
             }
             
             let displayFlightTime = Math.round(flightTimeMinutes);
@@ -506,7 +650,8 @@
             // Profil 2: Aðýr Yük (Maksimum Payload, Minimum Batarya - Uçaðýn sadece %15'i batarya)
             const maxBatWeightKg2 = mtowKg * 0.15; 
             let capacityAh2 = Math.round(((maxBatWeightKg2 * energyDensityWhPerKg) / selectedBat.v) * 10) / 10;
-            const flightTimeMinutes2 = (capacityAh2 / totalCruiseCurrentDraw) * 60;
+            // Kapasitenin sadece %80'ini kullanacak sekilde (Güvenli Sinir)
+            const flightTimeMinutes2 = ((capacityAh2 * 0.8) / totalCruiseCurrentDraw) * 60;
             const requiredCRating2 = totalMaxCurrentDraw / capacityAh2;
 
             document.getElementById('dashMotor2').innerText = `Seyir RPM: ${Math.round(cruiseRpm)}`;
@@ -520,7 +665,8 @@
             // Profil 3: Dengeli (Standart Uçuç - Uçaðýn %22'si batarya)
             const maxBatWeightKg3 = mtowKg * 0.22; 
             let capacityAh3 = Math.round(((maxBatWeightKg3 * energyDensityWhPerKg) / selectedBat.v) * 10) / 10;
-            const flightTimeMinutes3 = (capacityAh3 / totalCruiseCurrentDraw) * 60;
+            // Kapasitenin sadece %80'ini kullanacak sekilde (Güvenli Sinir)
+            const flightTimeMinutes3 = ((capacityAh3 * 0.8) / totalCruiseCurrentDraw) * 60;
             const requiredCRating3 = totalMaxCurrentDraw / capacityAh3;
 
             document.getElementById('dashMotor3').innerText = `Seyir RPM: ${Math.round(cruiseRpm)}`;
